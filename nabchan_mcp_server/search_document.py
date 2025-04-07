@@ -1,3 +1,6 @@
+"""
+検索を試すためのスクリプト。
+"""
 from whoosh.index import open_dir
 from whoosh.qparser import QueryParser
 

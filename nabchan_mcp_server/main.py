@@ -1,3 +1,6 @@
+"""
+MCPサーバー本体。
+"""
 from mcp.server.fastmcp import FastMCP
 from whoosh.index import open_dir
 from whoosh.qparser import QueryParser
