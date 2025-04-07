@@ -1,0 +1,14 @@
+[project]
+name = "nabchan-mcp-server"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+    "beautifulsoup4>=4.13.3",
+    "html2text>=2024.2.26",
+    "janome>=0.5.0",
+    "mcp[cli]>=1.6.0",
+    "tqdm>=4.67.1",
+    "whoosh-reloaded>=2.7.5",
+]
