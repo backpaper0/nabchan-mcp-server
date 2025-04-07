@@ -59,6 +59,8 @@ MCPサーバーが提供しているAPIは次の通りです。
 
 ## VSCodeの設定例
 
+`/path/to/nabchan-mcp-server`は実際のパスに置き換えてください。
+
 ```json
 {
   "mcp": {
