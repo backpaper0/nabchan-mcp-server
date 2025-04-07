@@ -18,21 +18,18 @@ async def main(nablarch_document_path: Path, index_path: Path) -> None:
 
     html_dir = nablarch_document_path / "_build" / "html"
     html_files = [html_file for html_file in html_dir.rglob("*.html")]
+    baseurl = "https://nablarch.github.io/docs/LATEST/doc/"
 
     for html_file in tqdm(html_files):
         html = html_file.read_text(encoding="utf-8")
         soup = BeautifulSoup(html, "html.parser")
-        markdown = html2text(
-            html, baseurl="https://nablarch.github.io/docs/LATEST/doc/"
-        )
+        markdown = html2text(html, baseurl=baseurl)
 
         title = (
             str(soup.title.string) if soup.title and soup.title.string else "No Title"
         )
         content = markdown
-        url = "https://nablarch.github.io/docs/LATEST/doc/" + "/".join(
-            html_file.relative_to(html_dir).parts
-        )
+        url = baseurl + "/".join(html_file.relative_to(html_dir).parts)
         description = content[:100]
 
         writer.add_document(
