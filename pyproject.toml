@@ -1,7 +1,7 @@
 [project]
 name = "nabchan-mcp-server"
 version = "0.1.0"
-description = "Add your description here"
+description = "Nablarchの解説書をもとにしてNablarchの情報を返すMCPサーバーです"
 readme = "README.md"
 requires-python = ">=3.11"
 dependencies = [
