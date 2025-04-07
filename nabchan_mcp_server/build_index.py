@@ -4,9 +4,9 @@ from pathlib import Path
 from whoosh.index import create_in
 
 from nabchan_mcp_server import schema
-from html2text import html2text
 from bs4 import BeautifulSoup
 from tqdm import tqdm
+from html2text import html2text
 
 
 async def main(nablarch_document_path: Path, index_path: Path) -> None:
@@ -23,20 +23,20 @@ async def main(nablarch_document_path: Path, index_path: Path) -> None:
     for html_file in tqdm(html_files):
         html = html_file.read_text(encoding="utf-8")
         soup = BeautifulSoup(html, "html.parser")
-        markdown = html2text(html, baseurl=baseurl)
-
         title = (
             str(soup.title.string) if soup.title and soup.title.string else "No Title"
         )
-        content = markdown
+        content = soup.get_text(strip=True)
         url = baseurl + "/".join(html_file.relative_to(html_dir).parts)
         description = content[:100]
+        markdown = html2text(html)
 
         writer.add_document(
             title=title,
             content=content,
             url=url,
             description=description,
+            markdown=markdown,
         )
 
     writer.commit()

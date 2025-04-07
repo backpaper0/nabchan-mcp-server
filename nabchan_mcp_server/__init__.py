@@ -51,7 +51,8 @@ schema = Schema(
     url=ID(stored=True, unique=True),
     title=TEXT(stored=True),
     description=TEXT(stored=True),
-    content=TEXT(analyzer=JapaneseAnalyzer(), stored=True),
+    content=TEXT(analyzer=JapaneseAnalyzer()),
+    markdown=TEXT(stored=True, analyzer=None),
 )
 
 

@@ -17,7 +17,7 @@ def read_document(url: str) -> str:
     query = Term("url", url)
     with index.searcher() as searcher:
         results = searcher.search(query)
-        return results[0]["content"] if results else ""
+        return results[0]["markdown"] if results else ""
 
 
 @mcp.tool(description="Nablarchのドキュメントを検索します。")

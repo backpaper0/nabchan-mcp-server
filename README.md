@@ -18,10 +18,10 @@
 graph TD
    a[Nablarchの解説書のソース<br>（reStructuredText）]
    b[HTMLファイル]
-   c[markdown形式のテキスト]
+   c[テキスト]
    d[Whooshのインデックス]
    a -->|Sphinxでビルド<br>（Dockerを使用）| b
-   b -->|html2textでパース| c
+   b -->|BeautifulSoupでテキスト抽出| c
    c -->|Janomeで形態素解析| d
 ```
 
