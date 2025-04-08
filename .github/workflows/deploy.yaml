@@ -1,0 +1,29 @@
+name: Deploy container image to container registry
+
+on:
+  workflow_dispatch:
+  # push:
+  #   branches: [ main ]
+
+jobs:
+  build:
+    name: Build container image
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: 3.11
+      - name: build index
+        run: |
+          pip install uv
+          uv sync
+          uv run -m nabchan_mcp_server.build_index
+      - name: docker build
+        env:
+          CONTAINER_IMAGE: ghcr.io/backpaper0/nabchan-mcp-server:latest
+        run: |
+          docker --version
+          echo ${{ secrets.GITHUB_TOKEN }} | docker login ghcr.io -u backpaper0 --password-stdin
+          docker build --pull -t $CONTAINER_IMAGE .
+          docker push $CONTAINER_IMAGE
