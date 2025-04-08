@@ -7,6 +7,41 @@
 
 [Nablarchの解説書](https://nablarch.github.io/docs/LATEST/doc/)をもとにしてNablarchの情報を返すMCPサーバーです。
 
+## Getting started
+
+Dockerを使って簡単に試せます。
+
+```mermaid
+graph LR
+  a[VSCode]
+  b[nabchan-mcp-server<br>（Dockerコンテナ）]
+  a -->|SSEで通信| b
+```
+
+次のコマンドでDockerコンテナを起動してください。
+
+```bash
+docker run -p 8000:8000 ghcr.io/backpaper0/nabchan-mcp-server
+```
+
+VSCodeへ次の設定を追加してください。
+
+```json
+{
+  "mcp": {
+    "inputs": [],
+    "servers": {
+      "nablarch-document": {
+        "type": "sse",
+        "url": "http://localhost:8000/sse"
+      }
+    }
+  }
+}
+```
+
+GitHub Copilot ChatをAgentモードにしてNablarchに関する質問をしてみてください。
+
 ## アーキテクチャ
 
 とりあえずローカルのPythonだけで動作するような構成を取っています。
@@ -102,4 +137,28 @@ SSEを使う場合は次のコマンドであらかじめサーバーを起動�
 
 ```bash
 uv run -m nabchan_mcp_server.main --transport sse
+```
+
+## コンテナイメージのビルドとデプロイ
+
+インデックスを構築した状態で次のコマンドを実行してコンテナイメージをビルドします。
+
+```bash
+docker build -t nabchan-mcp-server .
+```
+
+コンテナイメージをGitHubのContainer registryへデプロイします。
+
+- 参考: [コンテナレジストリの利用 - GitHub Docs](https://docs.github.com/ja/packages/working-with-a-github-packages-registry/working-with-the-container-registry)
+
+```bash
+echo $CR_PAT | docker login ghcr.io -u USERNAME --password-stdin
+```
+
+```bash
+docker tag nabchan-mcp-server ghcr.io/backpaper0/nabchan-mcp-server:latest
+```
+
+```bash
+docker push ghcr.io/backpaper0/nabchan-mcp-server:latest
 ```
