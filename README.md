@@ -81,3 +81,25 @@ MCPサーバーが提供しているAPIは次の通りです。
   }
 }
 ```
+
+トランスポートタイプにSSEを使う場合はこちら。
+
+```json
+{
+  "mcp": {
+    "inputs": [],
+    "servers": {
+      "nablarch-document": {
+        "type": "sse",
+        "url": "http://localhost:8000/sse"
+      }
+    }
+  }
+}
+```
+
+SSEを使う場合は次のコマンドであらかじめサーバーを起動しておく必要があります。
+
+```bash
+uv run -m nabchan_mcp_server.main --transport sse
+```

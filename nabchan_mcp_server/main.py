@@ -1,18 +1,26 @@
 """
 MCPサーバー本体。
 """
+
 from mcp.server.fastmcp import FastMCP
 from whoosh.index import open_dir
 from whoosh.qparser import QueryParser
 from whoosh.query import Term
 
 from nabchan_mcp_server import SearchResult
+from argparse import ArgumentParser
 
 
 index = open_dir("index")
 
 
-mcp = FastMCP("nabchan")
+parser = ArgumentParser()
+parser.add_argument("--transport", "-t", type=str, default="stdio")
+parser.add_argument("--host", "-H", type=str, default="0.0.0.0")
+parser.add_argument("--port", "-p", type=int, default=8000)
+args = parser.parse_args()
+
+mcp = FastMCP("nabchan", host=args.host, port=args.port)
 
 
 @mcp.tool(description="URLが示すNablarchのドキュメントを返します。")
@@ -39,4 +47,4 @@ def search_document(search_query: str, result_limit: int) -> list[SearchResult]:
 
 
 if __name__ == "__main__":
-    mcp.run(transport="stdio")
+    mcp.run(transport=args.transport)

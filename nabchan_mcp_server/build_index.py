@@ -1,6 +1,7 @@
 """
 インデックスを構築するスクリプト。
 """
+
 from argparse import ArgumentParser
 import asyncio
 from pathlib import Path
