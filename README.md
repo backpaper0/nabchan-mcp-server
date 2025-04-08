@@ -127,27 +127,3 @@ SSEを使う場合は次のコマンドであらかじめサーバーを起動�
 ```bash
 uv run -m nabchan_mcp_server.main --transport sse
 ```
-
-## コンテナイメージのビルドとデプロイ
-
-インデックスを構築した状態で次のコマンドを実行してコンテナイメージをビルドします。
-
-```bash
-docker build -t nabchan-mcp-server .
-```
-
-コンテナイメージをGitHubのContainer registryへデプロイします。
-
-- 参考: [コンテナレジストリの利用 - GitHub Docs](https://docs.github.com/ja/packages/working-with-a-github-packages-registry/working-with-the-container-registry)
-
-```bash
-echo $CR_PAT | docker login ghcr.io -u USERNAME --password-stdin
-```
-
-```bash
-docker tag nabchan-mcp-server ghcr.io/backpaper0/nabchan-mcp-server:latest
-```
-
-```bash
-docker push ghcr.io/backpaper0/nabchan-mcp-server:latest
-```
