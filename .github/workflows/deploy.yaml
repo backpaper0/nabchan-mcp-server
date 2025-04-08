@@ -19,12 +19,14 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: 3.11
-      - name: build index
+      - name: setup uv and venv
         run: |
           pip install uv
           uv sync
+      - name: build index
+        run: |
           uv run -m nabchan_mcp_server.build_index
-      - name: docker build
+      - name: docker build and push
         env:
           CONTAINER_IMAGE: ghcr.io/backpaper0/nabchan-mcp-server
         run: |

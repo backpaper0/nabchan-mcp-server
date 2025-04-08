@@ -1,0 +1,26 @@
+name: Static analysis and tests
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build:
+    name: static analysis and tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with: 
+          submodules: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: 3.11
+      - name: setup uv and venv
+        run: |
+          pip install uv
+          uv sync
+      - name: lint
+        run: |
+          uvx ruff format --check
+          uvx ruff check
