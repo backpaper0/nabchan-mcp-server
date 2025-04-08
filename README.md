@@ -51,13 +51,11 @@ GitHub Copilot ChatをAgentモードにしてNablarchに関する質問をして
 
 ```mermaid
 graph TD
-   a[Nablarchの解説書のソース<br>（reStructuredText）]
-   b[HTMLファイル]
-   c[テキスト]
-   d[Whooshのインデックス]
-   a -->|Sphinxでビルド<br>（Dockerを使用）| b
-   b -->|BeautifulSoupでテキスト抽出| c
-   c -->|Janomeで形態素解析| d
+   a[Nablarchの解説書<br>（HTMLファイル）]
+   b[テキスト]
+   c[Whooshのインデックス]
+   a -->|BeautifulSoupで<br>テキスト抽出| b
+   b -->|Janomeで形態素解析| c
 ```
 
 MCPサーバーが提供しているAPIは次の通りです。
@@ -76,21 +74,12 @@ MCPサーバーが提供しているAPIは次の通りです。
 
 ## インデックスの構築手順
 
-1. Nablarchの解説書を取得します
-   ```bash
-   git clone --depth=1 git@github.com:nablarch/nablarch-document.git
-   ```
-2. 解説書をビルドします
-   ```bash
-   docker build -t nablarch-document-build nablarch-document
-   ```
-   ```bash
-   docker run --rm -v $PWD/nablarch-document:/root/document -w /root/document nablarch-document-build sphinx-build -d _build/.doctrees/ja -b html ja _build/html
-   ```
-3. 全文検索のインデックスを作成します
-   ```bash
-   uv run -m nabchan_mcp_server.build_index --nablarch_document_path=nablarch-document --index_path=index
-   ```
+```bash
+uv run -m nabchan_mcp_server.build_index
+```
+
+> [!NOTE]
+> サブモジュールの中身を取得していない場合、`git submodule init`と`git submodule update`を実行してください。
 
 ## VSCodeの設定例
 

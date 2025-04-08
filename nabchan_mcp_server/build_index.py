@@ -20,9 +20,11 @@ async def main(nablarch_document_path: Path, index_path: Path) -> None:
 
     writer = file_index.writer()
 
-    html_dir = nablarch_document_path / "_build" / "html"
-    html_files = [html_file for html_file in html_dir.rglob("*.html")]
-    baseurl = "https://nablarch.github.io/docs/LATEST/doc/"
+    html_files = [
+        html_file
+        for html_file in nablarch_document_path.rglob("*.html")
+        if "en" not in html_file.parts
+    ]
 
     for html_file in tqdm(html_files):
         html = html_file.read_text(encoding="utf-8")
@@ -31,7 +33,7 @@ async def main(nablarch_document_path: Path, index_path: Path) -> None:
             str(soup.title.string) if soup.title and soup.title.string else "No Title"
         )
         content = soup.get_text(strip=True)
-        url = baseurl + "/".join(html_file.relative_to(html_dir).parts)
+        url = "https://" + "/".join(html_file.parts)
         description = content[:100]
         markdown = html2text(html)
 
@@ -49,21 +51,19 @@ async def main(nablarch_document_path: Path, index_path: Path) -> None:
 if __name__ == "__main__":
     parser = ArgumentParser()
     parser.add_argument(
-        "--nablarch_document_path",
-        type=Path,
-        required=True,
-        help="Nablarchのドキュメントのパス",
-    )
-    parser.add_argument(
-        "--index_path",
-        type=Path,
-        required=True,
-        help="インデックスのパス",
+        "--nablarch_version",
+        type=str,
+        default="LATEST",
+        help="Nablarchのドキュメントのバージョン",
     )
     args = parser.parse_args()
+    nablarch_document_path = (
+        Path("nablarch.github.io") / "docs" / args.nablarch_version / "doc"
+    )
+    index_path = Path("index")
     asyncio.run(
         main(
-            nablarch_document_path=args.nablarch_document_path,
-            index_path=args.index_path,
+            nablarch_document_path=nablarch_document_path,
+            index_path=index_path,
         )
     )

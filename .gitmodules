@@ -1,0 +1,3 @@
+[submodule "nablarch.github.io"]
+	path = nablarch.github.io
+	url = https://github.com/nablarch/nablarch.github.io.git
