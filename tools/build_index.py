@@ -7,7 +7,7 @@ import asyncio
 from pathlib import Path
 from whoosh.index import create_in
 
-from nabchan_mcp_server import schema
+from nabchan_mcp_server.index import schema
 from bs4 import BeautifulSoup
 from tqdm import tqdm
 from html2text import html2text

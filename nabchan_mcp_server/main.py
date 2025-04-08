@@ -2,13 +2,19 @@
 MCPサーバー本体。
 """
 
+from typing import TypedDict
 from mcp.server.fastmcp import FastMCP
 from whoosh.index import open_dir
 from whoosh.qparser import QueryParser
 from whoosh.query import Term
 
-from nabchan_mcp_server import SearchResult
 from argparse import ArgumentParser
+
+
+class SearchResult(TypedDict):
+    url: str
+    title: str
+    description: str
 
 
 index = open_dir("index")

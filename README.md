@@ -72,14 +72,20 @@ MCPサーバーが提供しているAPIは次の通りです。
 - Git
 - Docker
 
-## インデックスの構築手順
+## インデックスの構築
 
 ```bash
-uv run -m nabchan_mcp_server.build_index
+uv run -m tools.build_index
 ```
 
 > [!NOTE]
 > サブモジュールの中身を取得していない場合、`git submodule init`と`git submodule update`を実行してください。
+
+### 検索を試す
+
+```bash
+uv run -m tools.search_document -q "Nablarch"
+```
 
 ## VSCodeの設定例
 
