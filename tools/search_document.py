@@ -2,6 +2,7 @@
 検索を試すためのスクリプト。
 """
 
+import json
 from whoosh.index import open_dir
 from whoosh.qparser import QueryParser
 
@@ -30,5 +31,4 @@ if __name__ == "__main__":
     with index.searcher() as searcher:
         query = QueryParser("content", index.schema).parse(args.search_query)
         results = searcher.search(query, limit=args.result_limit)
-        for index, result in enumerate(results, start=1):
-            print(f"{index}: {result}")
+        print(json.dumps([result.fields() for result in results], ensure_ascii=False))
