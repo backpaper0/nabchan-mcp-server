@@ -47,23 +47,37 @@ GitHub Copilot ChatをAgentモードにしてNablarchに関する質問をして
 とりあえずローカルのPythonだけで動作するような構成を取っています。
 
 [Whoosh](https://sygil-dev.github.io/whoosh-reloaded/)という全文検索ライブラリと[Janome](https://janome.mocobeta.dev/ja/)という形態素解析ライブラリを使ってインデックスを構築しています。
-インデックスは解説書のHTMLを元に作成されます。
+解説書のHTMLから抽出したテキストを形態素解析したものが全文検索の対象フィールドとなります。
+それ以外にもタイトルや概要、内容をmarkdown形式に変換したものをもっており、それらはMCPサーバーが提供するAPIで利用されます。
 
 ```mermaid
 graph TD
-   a[Nablarchの解説書<br>（HTMLファイル）]
-   b[テキスト]
-   c[Whooshのインデックス]
-   a -->|BeautifulSoupで<br>テキスト抽出| b
-   b -->|Janomeで形態素解析| c
+   h[Nablarchの解説書<br>（HTMLファイル）]
+   c(テキスト)
+   d(概要)
+   t(タイトル)
+   m(markdown)
+   i[Whooshのインデックス]
+
+   h -->|BeautifulSoupで<br>テキスト抽出| c
+   c -->|Janomeで形態素解析| i
+   c -->|前方100文字| d
+   d --> i
+   h -->|BeautifulSoupで<br>タイトル抽出|t
+   t --> i
+   h -->|html2textで<br>markdown化| m
+   m --> i
 ```
 
 MCPサーバーが提供しているAPIは次の通りです。
 
 - `read_document`
-    - URLが示すNablarchのドキュメントを返します。
+    - URLが示すNablarchのドキュメントをmarkdown形式へ変換したものを返します。
 - `search_document`
-    - Nablarchのドキュメントを検索します。
+    - Nablarchのドキュメントを検索します。返される情報は次の通り
+        - タイトル
+        - URL
+        - 概要
 
 ## 必要な環境
 
