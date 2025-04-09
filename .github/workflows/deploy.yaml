@@ -9,6 +9,9 @@ permissions:
   packages: write
 
 jobs:
+  lint:
+    name: Static analysis and tests
+    uses: ./.github/workflows/lint.yaml
   build:
     name: Build container image
     runs-on: ubuntu-latest
@@ -26,6 +29,8 @@ jobs:
       - name: build index
         run: |
           uv run -m tools.build_index
+        env:
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
       - name: docker build and push
         env:
           CONTAINER_IMAGE: ghcr.io/backpaper0/nabchan-mcp-server
