@@ -25,7 +25,7 @@ jobs:
           uv sync
       - name: build index
         run: |
-          uv run -m nabchan_mcp_server.build_index
+          uv run -m tools.build_index
       - name: docker build and push
         env:
           CONTAINER_IMAGE: ghcr.io/backpaper0/nabchan-mcp-server
