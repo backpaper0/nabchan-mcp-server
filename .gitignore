@@ -12,3 +12,4 @@ wheels/
 nablarch-document/
 index/
 .vscode/
+.env

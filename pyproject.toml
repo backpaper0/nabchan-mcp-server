@@ -5,10 +5,15 @@ description = "Nablarchの解説書をもとにしてNablarchの情報を返すM
 readme = "README.md"
 requires-python = ">=3.11"
 dependencies = [
+    "aiofiles>=24.1.0",
     "beautifulsoup4>=4.13.3",
     "html2text>=2024.2.26",
     "janome>=0.5.0",
+    "langchain-openai>=0.3.12",
     "mcp[cli]>=1.6.0",
+    "pydantic>=2.11.2",
+    "python-dotenv>=1.1.0",
+    "tiktoken>=0.9.0",
     "tqdm>=4.67.1",
     "whoosh-reloaded>=2.7.5",
 ]
