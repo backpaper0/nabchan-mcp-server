@@ -5,6 +5,7 @@ MCPサーバー本体。
 import json
 from typing import TypedDict
 from mcp.server.fastmcp import FastMCP
+from pydantic import Field
 from whoosh.index import open_dir
 from whoosh.qparser import QueryParser
 from whoosh.query import Term
@@ -27,10 +28,15 @@ parser.add_argument("--host", "-H", type=str, default="0.0.0.0")
 parser.add_argument("--port", "-p", type=int, default=8000)
 args = parser.parse_args()
 
-mcp = FastMCP("nabchan", host=args.host, port=args.port)
+
+instructions = "Nablarchのドキュメントを検索するMCPサーバー"
+
+mcp = FastMCP("nabchan", host=args.host, port=args.port, instructions=instructions)
 
 
-@mcp.tool(description="URLが示すNablarchのドキュメントを返します。")
+@mcp.tool(
+    description="URLが示すNablarchのドキュメントを返します。ドキュメントはMarkdown形式で返されます。"
+)
 def read_document(url: str) -> str:
     with index.searcher() as searcher:
         query = Term("url", url)
@@ -38,8 +44,13 @@ def read_document(url: str) -> str:
         return results[0]["markdown"] if results else ""
 
 
-@mcp.tool(description="Nablarchのドキュメントを検索します。")
-def search_document(search_query: str, result_limit: int) -> str:
+@mcp.tool(
+    description="Nablarchのドキュメントを全文検索します。結果にはURL、タイトル、概要が含まれます。"
+)
+def search_document(
+    search_query: str = Field(description="検索クエリ"),
+    result_limit: int = Field(description="検索結果の最大件数"),
+) -> str:
     with index.searcher() as searcher:
         query = QueryParser("content", index.schema).parse(search_query)
         results = [
