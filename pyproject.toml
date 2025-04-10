@@ -17,3 +17,11 @@ dependencies = [
     "tqdm>=4.67.1",
     "whoosh-reloaded>=2.7.5",
 ]
+
+[dependency-groups]
+dev = [
+    "taskipy>=1.14.1",
+]
+
+[tool.taskipy.tasks]
+fix = "uvx ruff format && uvx ruff check --fix"
