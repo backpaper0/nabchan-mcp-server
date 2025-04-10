@@ -61,7 +61,7 @@ graph TD
 
    h -->|BeautifulSoupで<br>テキスト抽出| c
    c -->|Janomeで形態素解析| i
-   c -->|前方100文字| d
+   c -->|LLMで要約| d
    d --> i
    h -->|BeautifulSoupで<br>タイトル抽出|t
    t --> i
