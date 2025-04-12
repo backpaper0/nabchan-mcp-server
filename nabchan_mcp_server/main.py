@@ -3,14 +3,42 @@ MCPサーバー本体。
 """
 
 import json
-from typing import TypedDict
+from typing import Literal, TypedDict
 from mcp.server.fastmcp import FastMCP
 from pydantic import Field
 from whoosh.index import open_dir
 from whoosh.qparser import QueryParser
 from whoosh.query import Term
 
-from argparse import ArgumentParser
+
+from pydantic_settings import (
+    BaseSettings,
+    CliSettingsSource,
+    PydanticBaseSettingsSource,
+)
+
+
+class Settings(BaseSettings):
+    transport: Literal["stdio", "sse"] = "stdio"
+    host: str | None = None
+    port: int | None = None
+
+    @classmethod
+    def settings_customise_sources(
+        cls,
+        settings_cls: type[BaseSettings],
+        init_settings: PydanticBaseSettingsSource,
+        env_settings: PydanticBaseSettingsSource,
+        dotenv_settings: PydanticBaseSettingsSource,
+        file_secret_settings: PydanticBaseSettingsSource,
+    ) -> tuple[PydanticBaseSettingsSource, ...]:
+        return (
+            init_settings,
+            CliSettingsSource(settings_cls, cli_parse_args=True),
+            env_settings,
+            dotenv_settings,
+            file_secret_settings,
+        )
 
 
 class SearchResult(TypedDict):
@@ -19,19 +47,18 @@ class SearchResult(TypedDict):
     description: str
 
 
+settings = Settings()
+
 index = open_dir("index")
-
-
-parser = ArgumentParser()
-parser.add_argument("--transport", "-t", type=str, default="stdio")
-parser.add_argument("--host", "-H", type=str, default="0.0.0.0")
-parser.add_argument("--port", "-p", type=int, default=8000)
-args = parser.parse_args()
 
 
 instructions = "Nablarchのドキュメントを検索するMCPサーバー"
 
-mcp = FastMCP("nabchan", host=args.host, port=args.port, instructions=instructions)
+mcp = FastMCP("nabchan", instructions=instructions)
+if settings.host:
+    mcp.settings.host = settings.host
+if settings.port:
+    mcp.settings.port = settings.port
 
 
 @mcp.tool(
@@ -68,4 +95,4 @@ def search_document(
 
 
 if __name__ == "__main__":
-    mcp.run(transport=args.transport)
+    mcp.run(transport=settings.transport)

@@ -15,13 +15,7 @@ Dockerを使って簡単に試せます。
 graph LR
   a[VSCode]
   b[nabchan-mcp-server<br>（Dockerコンテナ）]
-  a -->|SSEで通信| b
-```
-
-次のコマンドでDockerコンテナを起動してください。
-
-```bash
-docker run -p 8000:8000 ghcr.io/backpaper0/nabchan-mcp-server
+  a -->|標準入出力で通信| b
 ```
 
 VSCodeへ次の設定を追加してください。
@@ -32,8 +26,15 @@ VSCodeへ次の設定を追加してください。
     "inputs": [],
     "servers": {
       "nablarch-document": {
-        "type": "sse",
-        "url": "http://localhost:8000/sse"
+        "command": "docker",
+        "args": [
+          "run",
+          "-i",
+          "--rm",
+          "-e",
+          "TRANSPORT=stdio",
+          "ghcr.io/backpaper0/nabchan-mcp-server",
+        ]
       }
     }
   }
@@ -101,7 +102,7 @@ uv run -m tools.build_index
 uv run -m tools.search_document -q "Nablarch"
 ```
 
-## VSCodeの設定例
+## 開発時のVSCode設定例
 
 `/path/to/nabchan-mcp-server`は実際のパスに置き換えてください。
 
@@ -118,8 +119,7 @@ uv run -m tools.search_document -q "Nablarch"
           "run",
           "-m",
           "nabchan_mcp_server.main",
-        ],
-        "env": {}
+        ]
       }
     }
   }
@@ -145,5 +145,5 @@ uv run -m tools.search_document -q "Nablarch"
 SSEを使う場合は次のコマンドであらかじめサーバーを起動しておく必要があります。
 
 ```bash
-uv run -m nabchan_mcp_server.main --transport sse
+uv run -m nabchan_mcp_server.main --transport sse --host localhost
 ```

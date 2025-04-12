@@ -12,4 +12,6 @@ COPY index /workspace/index
 
 WORKDIR /workspace
 
-CMD ["uv", "run", "python", "-m", "nabchan_mcp_server.main", "--transport=sse"]
+ENV TRANSPORT=sse
+
+CMD ["uv", "run", "python", "-m", "nabchan_mcp_server.main"]
