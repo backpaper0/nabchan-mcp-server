@@ -31,6 +31,8 @@ VSCodeへ次の設定を追加してください。
           "run",
           "-i",
           "--rm",
+          "--network",
+          "none",
           "-e",
           "TRANSPORT=stdio",
           "ghcr.io/backpaper0/nabchan-mcp-server",
