@@ -14,4 +14,4 @@ WORKDIR /workspace
 
 ENV TRANSPORT=sse
 
-CMD ["uv", "run", "python", "-m", "nabchan_mcp_server.main"]
+ENTRYPOINT ["uv", "run", "python", "-m", "nabchan_mcp_server.main"]
