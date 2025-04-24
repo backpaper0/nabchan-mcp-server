@@ -45,6 +45,14 @@ VSCodeへ次の設定を追加してください。
 
 GitHub Copilot ChatをAgentモードにしてNablarchに関する質問をしてみてください。
 
+## ToolHive経由で実行する
+
+[ToolHive](https://github.com/StacklokLabs/toolhive)経由で実行する場合は次のコマンドを実行してください。
+
+```bash
+thv run --name nabchan-mcp-server ghcr.io/backpaper0/nabchan-mcp-server -- --transport=stdio
+```
+
 ## アーキテクチャ
 
 とりあえずローカルのPythonだけで動作するような構成を取っています。
