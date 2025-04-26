@@ -64,7 +64,7 @@ if settings.port:
 @mcp.tool(
     description="URLが示すNablarchのドキュメントを返します。ドキュメントはMarkdown形式で返されます。"
 )
-def read_document(url: str) -> str:
+def read_document(url: str = Field(description="ドキュメントのURL")) -> str:
     with index.searcher() as searcher:
         query = Term("url", url)
         results = searcher.search(query)
