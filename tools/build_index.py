@@ -68,7 +68,17 @@ async def process_html_file(
             soup = BeautifulSoup(html, "html.parser")
             main_content = soup.select_one("[role='main']")
             if not main_content:
+                # main_contentがないページは除外する
                 return
+
+            if html_file.name == "index.html":
+                toctrees = main_content.select("div.toctree-wrapper")
+                all_divs = main_content.select("div")
+                not_toctree_divs = [div for div in all_divs if div not in toctrees]
+                if len(not_toctree_divs) == 3:
+                    # tocしかないページは除外する
+                    return
+
             title = (
                 str(soup.title.string)
                 if soup.title and soup.title.string
