@@ -55,11 +55,11 @@ thv run --name nabchan-mcp-server ghcr.io/backpaper0/nabchan-mcp-server -- --tra
 
 ## アーキテクチャ
 
-とりあえずローカルのPythonだけで動作するような構成を取っています。
+ローカルのPythonだけで動作するような構成を取っています。
 
 [Whoosh](https://sygil-dev.github.io/whoosh-reloaded/)という全文検索ライブラリと[Janome](https://janome.mocobeta.dev/ja/)という形態素解析ライブラリを使ってインデックスを構築しています。
 解説書のHTMLから抽出したテキストを形態素解析したものが全文検索の対象フィールドとなります。
-それ以外にもタイトルや概要、内容をmarkdown形式に変換したものをもっており、それらはMCPサーバーが提供するAPIで利用されます。
+それ以外にもタイトル、概要、内容をmarkdown形式に変換したもの、をもっており、それらはMCPサーバーが提供するAPIで利用されます。
 
 ```mermaid
 graph TD
@@ -90,14 +90,16 @@ MCPサーバーが提供しているAPIは次の通りです。
         - URL
         - 概要
 
-## 必要な環境
+## nabchan-mcp-server開発者向けの情報
+
+### 開発に必要な環境
 
 - Python 3.11
 - [uv](https://docs.astral.sh/uv/)
 - Git
 - Docker
 
-## インデックスの構築
+### インデックスの構築
 
 ```bash
 uv run -m tools.build_index
@@ -106,13 +108,13 @@ uv run -m tools.build_index
 > [!NOTE]
 > サブモジュールの中身を取得していない場合、`git submodule init`と`git submodule update`を実行してください。
 
-### 検索を試す
+#### 検索を試す
 
 ```bash
 uv run -m tools.search_document -q "Nablarch"
 ```
 
-## 開発時のVSCode設定例
+### 開発時のVSCode設定例
 
 `/path/to/nabchan-mcp-server`は実際のパスに置き換えてください。
 
