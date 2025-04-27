@@ -3,10 +3,9 @@
 """
 
 import json
-from whoosh.index import open_dir
-from whoosh.qparser import QueryParser
 
 from argparse import ArgumentParser
+import nabchan_mcp_server.index as idx
 
 
 if __name__ == "__main__":
@@ -27,8 +26,24 @@ if __name__ == "__main__":
     )
     args = parser.parse_args()
 
-    index = open_dir("index")
-    with index.searcher() as searcher:
-        query = QueryParser("content", index.schema).parse(args.search_query)
-        results = searcher.search(query, limit=args.result_limit)
-        print(json.dumps([result.fields() for result in results], ensure_ascii=False))
+    results = idx.search_index(
+        search_query=args.search_query,
+        result_limit=args.result_limit,
+        select_columns=["url", "title", "description", "markdown", "score"],
+    )
+
+    print(
+        json.dumps(
+            [
+                {
+                    "url": url,
+                    "title": title,
+                    "description": description,
+                    "markdown": markdown,
+                    "score": score,
+                }
+                for url, title, description, markdown, score in results
+            ],
+            ensure_ascii=False,
+        )
+    )

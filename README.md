@@ -57,7 +57,7 @@ thv run --name nabchan-mcp-server ghcr.io/backpaper0/nabchan-mcp-server -- --tra
 
 ローカルのPythonだけで動作するような構成を取っています。
 
-[Whoosh](https://sygil-dev.github.io/whoosh-reloaded/)という全文検索ライブラリと[Janome](https://janome.mocobeta.dev/ja/)という形態素解析ライブラリを使ってインデックスを構築しています。
+[DuckDB](https://duckdb.org/)の全文検索拡張（[Full-Text Search Extension](https://duckdb.org/docs/stable/extensions/full_text_search)）と[Lindera](https://github.com/lindera/lindera)という形態素解析ライブラリを使ってインデックスを構築しています。
 解説書のHTMLから抽出したテキストを形態素解析したものが全文検索の対象フィールドとなります。
 それ以外にもタイトル、概要、内容をmarkdown形式に変換したもの、をもっており、それらはMCPサーバーが提供するAPIで利用されます。
 
@@ -68,10 +68,10 @@ graph TD
    d(概要)
    t(タイトル)
    m(markdown)
-   i[Whooshのインデックス]
+   i[DuckDB]
 
    h -->|BeautifulSoupで<br>テキスト抽出| c
-   c -->|Janomeで形態素解析| i
+   c -->|Linderaで形態素解析| i
    c -->|LLMで要約| d
    d --> i
    h -->|BeautifulSoupで<br>タイトル抽出|t

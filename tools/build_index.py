@@ -7,9 +7,7 @@ import asyncio
 from pathlib import Path
 from typing import Awaitable, Callable, cast
 import aiofiles
-from whoosh.index import create_in
 
-from nabchan_mcp_server.index import schema
 from bs4 import BeautifulSoup
 from tqdm.asyncio import tqdm
 from html2text import html2text
@@ -19,6 +17,9 @@ from langchain_openai.chat_models import ChatOpenAI
 from langchain_core.messages import SystemMessage, HumanMessage
 from dotenv import load_dotenv
 from langchain_core.rate_limiters import InMemoryRateLimiter
+
+import duckdb
+import nabchan_mcp_server.index as idx
 
 
 class Document(BaseModel):
@@ -42,18 +43,41 @@ summarize_system_prompt = """あなたは技術文書を簡潔に要約する専
 
 
 async def add_document(queue: asyncio.Queue, index_path: Path) -> None:
-    if not index_path.exists():
-        index_path.mkdir(parents=True)
-    index = create_in(index_path, schema)
-    writer = index.writer()
-    while True:
-        item = await queue.get()
-        if item is None:
-            break
-        document = cast(Document, item)
-        writer.add_document(**document.model_dump())
-        queue.task_done()
-    writer.commit()
+    with duckdb.connect(index_path) as conn:
+        conn.install_extension("fts")
+        conn.load_extension("fts")
+        conn.execute(
+            """
+            CREATE TABLE IF NOT EXISTS documents (
+                title TEXT,
+                content TEXT,
+                url TEXT,
+                description TEXT,
+                markdown TEXT,
+                PRIMARY KEY (url)
+            )
+            """
+        )
+        while True:
+            item = await queue.get()
+            if item is None:
+                break
+            document = cast(Document, item)
+            content = idx.tokenize(document.content)
+            conn.execute(
+                """
+                INSERT INTO documents (title, content, url, description, markdown)
+                VALUES ($title, $content, $url, $description, $markdown)
+                """,
+                {**document.model_dump(), "content": content},
+            )
+            queue.task_done()
+        conn.execute(
+            """
+            PRAGMA create_fts_index('documents', 'url', 'content',
+                stemmer = 'none', stopwords = 'none', ignore = '', strip_accents = false, lower = false)
+            """
+        )
 
 
 async def process_html_file(
@@ -155,7 +179,7 @@ if __name__ == "__main__":
     nablarch_document_path = (
         Path("nablarch.github.io") / "docs" / args.nablarch_version / "doc"
     )
-    index_path = Path("index")
+    index_path = Path("index.db")
 
     if args.llm == "none":
 

@@ -1,55 +1,64 @@
-from whoosh.analysis import (
-    Tokenizer as WhooshTokenizer,
-    Token,
-    Analyzer as WhooshAnalyzer,
-)
-from janome.tokenizer import Tokenizer as JanomeTokenizer
-from whoosh.fields import Schema, TEXT, ID
+from typing import Any
+from lindera_py import Segmenter, Tokenizer, load_dictionary
+import duckdb
+
+dictionary = load_dictionary("ipadic")
+segmenter = Segmenter("normal", dictionary)
+tokenizer = Tokenizer(segmenter)
 
 
-class JapaneseTokenizer(WhooshTokenizer):
-    def __init__(self) -> None:
-        self.tokenizer = JanomeTokenizer()
-
-    def __call__(self, value, **kwargs):
-        assert isinstance(value, str)
-        base_pos = 0
-        for token in self.tokenizer.tokenize(value):
-            tok = Token()
-            tok.text = token.surface
-            tok.pos = base_pos  # 必須: 文字列内の位置（オフセット）を記録
-            tok.boost = 1.0
-            tok.startchar = base_pos
-            tok.endchar = base_pos + len(token.surface)
-            tok.posinc = 1  # 増分（通常は1）
-            tok.stopped = False
-            tok.stem = ""
-            tok.pos_tag = token.part_of_speech  # ← 品詞タグ（任意だけど有用）
-
-            yield tok
-            base_pos += len(token.surface)
-
-    def __getstate__(self) -> dict:
-        # tokenizerを除外してシリアライズ
-        return {}
-
-    def __setstate__(self, state) -> None:
-        # 読み込み時にtokenizerを再生成
-        self.tokenizer = JanomeTokenizer()
+def tokenize(text: str) -> str:
+    return " ".join(token.text for token in tokenizer.tokenize(text))
 
 
-class JapaneseAnalyzer(WhooshAnalyzer):
-    def __init__(self):
-        self.tokenizer = JapaneseTokenizer()
+def _search_index(
+    search_query: str,
+    result_limit: int,
+    select_columns: list[str],
+    conn: duckdb.DuckDBPyConnection,
+) -> list[Any]:
+    query = f"""
+        SELECT {", ".join(select_columns)}
+        FROM (
+            SELECT *, fts_main_documents.match_bm25(url, $content, fields := 'content') AS score
+            FROM documents
+        ) docs
+        WHERE score IS NOT NULL
+        ORDER BY score DESC
+        OFFSET 0 LIMIT $limit
+        """
 
-    def __call__(self, value, **kwargs):
-        return self.tokenizer(value, **kwargs)
+    content = tokenize(search_query)
+
+    return conn.execute(
+        query,
+        {"content": content, "limit": result_limit},
+    ).fetchall()
 
 
-schema = Schema(
-    url=ID(stored=True, unique=True),
-    title=TEXT(stored=True),
-    description=TEXT(stored=True),
-    content=TEXT(analyzer=JapaneseAnalyzer()),
-    markdown=TEXT(stored=True, analyzer=None),
-)
+def search_index(
+    search_query: str,
+    result_limit: int,
+    select_columns: list[str],
+    conn: duckdb.DuckDBPyConnection | None = None,
+) -> list[Any]:
+    if conn:
+        return _search_index(
+            search_query,
+            result_limit,
+            select_columns,
+            conn,
+        )
+
+    with duckdb.connect("index.db", read_only=True) as _conn:
+        return _search_index(
+            search_query,
+            result_limit,
+            select_columns,
+            _conn,
+        )
+
+
+# DuckDBのextensionをダウンロードするための雑な検索
+if __name__ == "__main__":
+    search_index("Nablarch", 1, ["url"])

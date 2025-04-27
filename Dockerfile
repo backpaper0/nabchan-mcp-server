@@ -8,9 +8,12 @@ COPY uv.lock /workspace/
 RUN uv --directory /workspace sync
 
 COPY nabchan_mcp_server /workspace/nabchan_mcp_server
-COPY index /workspace/index
+COPY index.db /workspace/index.db
 
 WORKDIR /workspace
+
+# DuckDBのextensionをダウンロードするため、一度検索しておく
+RUN uv run python -m nabchan_mcp_server.index
 
 ENV TRANSPORT=sse
 

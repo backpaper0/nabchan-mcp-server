@@ -7,16 +7,16 @@ requires-python = ">=3.11"
 dependencies = [
     "aiofiles>=24.1.0",
     "beautifulsoup4>=4.13.3",
+    "duckdb>=1.2.2",
     "html2text>=2024.2.26",
-    "janome>=0.5.0",
     "langchain-openai>=0.3.12",
+    "lindera-py>=0.41.0",
     "mcp[cli]>=1.6.0",
     "pydantic>=2.11.2",
     "pydantic-settings>=2.8.1",
     "python-dotenv>=1.1.0",
     "tiktoken>=0.9.0",
     "tqdm>=4.67.1",
-    "whoosh-reloaded>=2.7.5",
 ]
 
 [dependency-groups]
@@ -26,3 +26,4 @@ dev = [
 
 [tool.taskipy.tasks]
 fix = "uvx ruff format && uvx ruff check --fix"
+test = "python -m unittest discover -s tests"

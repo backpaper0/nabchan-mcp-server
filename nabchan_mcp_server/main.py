@@ -6,9 +6,7 @@ import json
 from typing import Literal, TypedDict
 from mcp.server.fastmcp import FastMCP
 from pydantic import Field
-from whoosh.index import open_dir
-from whoosh.qparser import QueryParser
-from whoosh.query import Term
+import duckdb
 
 
 from pydantic_settings import (
@@ -16,6 +14,8 @@ from pydantic_settings import (
     CliSettingsSource,
     PydanticBaseSettingsSource,
 )
+
+import nabchan_mcp_server.index as idx
 
 
 class Settings(BaseSettings):
@@ -49,7 +49,7 @@ class SearchResult(TypedDict):
 
 settings = Settings()
 
-index = open_dir("index")
+conn = duckdb.connect("index.db", read_only=True)
 
 
 instructions = "Nablarchのドキュメントを検索するMCPサーバー"
@@ -65,10 +65,10 @@ if settings.port:
     description="URLが示すNablarchのドキュメントを返します。ドキュメントはMarkdown形式で返されます。"
 )
 def read_document(url: str = Field(description="ドキュメントのURL")) -> str:
-    with index.searcher() as searcher:
-        query = Term("url", url)
-        results = searcher.search(query)
-        return results[0]["markdown"] if results else ""
+    result = conn.execute(
+        "SELECT markdown FROM documents WHERE url = $url", {"url": url}
+    ).fetchone()
+    return result[0] if result else ""
 
 
 @mcp.tool(
@@ -78,20 +78,20 @@ def search_document(
     search_query: str = Field(description="検索クエリ"),
     result_limit: int = Field(description="検索結果の最大件数"),
 ) -> str:
-    with index.searcher() as searcher:
-        query = QueryParser("content", index.schema).parse(search_query)
-        results = [
-            SearchResult(
-                url=result["url"],
-                title=result["title"],
-                description=result["description"],
-            )
-            for result in searcher.search(query, limit=result_limit)
-        ]
-        # mcp/server/fastmcp/server.pyの_convert_to_content関数で素朴にjson.dumps()
-        # されているためUnicodeエスケープされないためにはstr、あるいはTextContent型で返す必要がある。
-        # ここではstrで返す。
-        return json.dumps(results, ensure_ascii=False)
+    results = [
+        SearchResult(url=url, title=title, description=description)
+        for url, title, description in idx.search_index(
+            search_query=search_query,
+            result_limit=result_limit,
+            select_columns=["url", "title", "description"],
+            conn=conn,
+        )
+    ]
+
+    # mcp/server/fastmcp/server.pyの_convert_to_content関数で素朴にjson.dumps()
+    # されているためUnicodeエスケープされないためにはstr、あるいはTextContent型で返す必要がある。
+    # ここではstrで返す。
+    return json.dumps(results, ensure_ascii=False)
 
 
 if __name__ == "__main__":
