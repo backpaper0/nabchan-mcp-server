@@ -1,20 +1,16 @@
 import json
+from typing import cast
 from mcp.client.stdio import stdio_client
 import unittest
 from mcp import ClientSession, StdioServerParameters
 from mcp.types import TextContent
 
 _server_params = StdioServerParameters(
-    command="docker",
+    command="uv",
     args=[
         "run",
-        "-i",
-        "--rm",
-        "--network",
-        "none",
-        "-e",
-        "TRANSPORT=stdio",
-        "nabchan-mcp-server",
+        "-m",
+        "nabchan_mcp_server.main",
     ],
 )
 
@@ -58,6 +54,7 @@ class TestSearchDocuments(unittest.IsolatedAsyncioTestCase):
             )
             self.assertEqual(len(response.content), 1)
             self.assertIsInstance(response.content[0], TextContent)
-            docs = json.loads(response.content[0].text)
+            text_content = cast(TextContent, response.content[0])
+            docs = json.loads(text_content.text)
             self.assertIsInstance(docs, list)
             self.assertEqual(len(docs), 3)
