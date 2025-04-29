@@ -5,8 +5,10 @@
 import json
 
 from argparse import ArgumentParser
-import nabchan_mcp_server.index as idx
-import nabchan_mcp_server.vector as vec
+from typing import cast
+from nabchan_mcp_server.search.factory import create_searcher
+from nabchan_mcp_server.search.models import SearchType
+from nabchan_mcp_server.db.connection import connect_db
 
 
 if __name__ == "__main__":
@@ -35,26 +37,18 @@ if __name__ == "__main__":
     )
     args = parser.parse_args()
 
-    search_index = idx.search_index if args.search_type == "fts" else vec.search_index
+    with connect_db(read_only=False) as conn:
+        search_type = cast(SearchType, args.search_type)
+        searcher = create_searcher(search_type, conn)
 
-    results = search_index(
-        search_query=args.search_query,
-        result_limit=args.result_limit,
-        select_columns=["url", "title", "description", "markdown", "score"],
-    )
-
-    print(
-        json.dumps(
-            [
-                {
-                    "url": url,
-                    "title": title,
-                    "description": description,
-                    "markdown": markdown,
-                    "score": score,
-                }
-                for url, title, description, markdown, score in results
-            ],
-            ensure_ascii=False,
+        results = searcher.search(
+            search_query=args.search_query,
+            result_limit=args.result_limit,
         )
-    )
+
+        print(
+            json.dumps(
+                [result.model_dump() for result in results],
+                ensure_ascii=False,
+            )
+        )

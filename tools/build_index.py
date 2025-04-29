@@ -12,23 +12,13 @@ from bs4 import BeautifulSoup
 from tqdm.asyncio import tqdm
 from html2text import html2text
 import re
-from pydantic import BaseModel
 from langchain_openai.chat_models import ChatOpenAI
 from langchain_core.messages import SystemMessage, HumanMessage
 from dotenv import load_dotenv
 from langchain_core.rate_limiters import InMemoryRateLimiter
 
-import duckdb
-import nabchan_mcp_server.index as idx
-from nabchan_mcp_server.vector import vectorize
-
-
-class Document(BaseModel):
-    title: str
-    content: str
-    url: str
-    description: str
-    markdown: str
+from nabchan_mcp_server.db.connection import connect_db
+from nabchan_mcp_server.db.operations import DbOperations, Document
 
 
 unnecessary_suffix_pattern = re.compile(r" — [^—]+$")
@@ -43,51 +33,18 @@ summarize_system_prompt = """あなたは技術文書を簡潔に要約する専
 """
 
 
-async def add_document(queue: asyncio.Queue, index_path: Path) -> None:
-    with duckdb.connect(index_path) as conn:
-        for extension in ["fts", "vss"]:
-            conn.install_extension(extension)
-            conn.load_extension(extension)
-        conn.execute(
-            """
-            CREATE TABLE IF NOT EXISTS documents (
-                title TEXT,
-                content TEXT,
-                url TEXT,
-                description TEXT,
-                markdown TEXT,
-                vec FLOAT[2048],
-                PRIMARY KEY (url)
-            )
-            """
-        )
+async def add_document(queue: asyncio.Queue) -> None:
+    with connect_db(read_only=False) as conn:
+        db_operations = DbOperations(conn)
+        db_operations.create_table()
         while True:
             item = await queue.get()
             if item is None:
                 break
             document = cast(Document, item)
-            content = idx.tokenize(document.content)
-            vec = vectorize(document.content)
-            conn.execute(
-                """
-                INSERT INTO documents (title, content, url, description, markdown, vec)
-                VALUES ($title, $content, $url, $description, $markdown, $vec)
-                """,
-                {**document.model_dump(), "content": content, "vec": vec},
-            )
+            db_operations.insert_row(document)
             queue.task_done()
-        conn.execute(
-            """
-            PRAGMA create_fts_index('documents', 'url', 'content',
-                stemmer = 'none', stopwords = 'none', ignore = '', strip_accents = false, lower = false)
-            """
-        )
-        conn.execute("SET hnsw_enable_experimental_persistence = true")
-        conn.execute(
-            """
-            CREATE INDEX documents_hsnw_index ON documents USING HNSW (vec)
-            """
-        )
+        db_operations.create_index()
 
 
 async def process_html_file(
@@ -126,18 +83,17 @@ async def process_html_file(
                 "".join([str(child) for child in main_content.children])
             )
             document = Document(
-                title=title,
-                content=content,
                 url=url,
+                title=title,
                 description=description,
                 markdown=markdown,
+                text_content=content,
             )
             await queue.put(document)
 
 
 async def main(
     nablarch_document_path: Path,
-    index_path: Path,
     parallels: int,
     generate_description: Callable[[str], Awaitable[str]],
 ) -> None:
@@ -157,7 +113,7 @@ async def main(
         for html_file in html_files
     ]
 
-    add_document_task = asyncio.create_task(add_document(queue, index_path))
+    add_document_task = asyncio.create_task(add_document(queue))
     for coro in tqdm(asyncio.as_completed(tasks), total=len(tasks)):
         await coro
     await queue.put(None)
@@ -189,7 +145,6 @@ if __name__ == "__main__":
     nablarch_document_path = (
         Path("nablarch.github.io") / "docs" / args.nablarch_version / "doc"
     )
-    index_path = Path("index.db")
 
     if args.llm == "none":
 
@@ -219,7 +174,6 @@ if __name__ == "__main__":
     asyncio.run(
         main(
             nablarch_document_path=nablarch_document_path,
-            index_path=index_path,
             parallels=args.parallels,
             generate_description=generate_description,
         )

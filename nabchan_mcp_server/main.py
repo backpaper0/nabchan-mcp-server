@@ -3,55 +3,12 @@ MCPサーバー本体。
 """
 
 import json
-from typing import Literal, TypedDict
 from mcp.server.fastmcp import FastMCP
 from pydantic import Field
-import duckdb
+from nabchan_mcp_server.search.factory import create_searcher
+from nabchan_mcp_server.db.connection import connect_db
 
-
-from pydantic_settings import (
-    BaseSettings,
-    CliSettingsSource,
-    PydanticBaseSettingsSource,
-)
-
-import nabchan_mcp_server.index as idx
-import nabchan_mcp_server.vector as vec
-
-
-class Settings(BaseSettings):
-    transport: Literal["stdio", "sse"] = "stdio"
-    host: str | None = None
-    port: int | None = None
-    search_type: Literal["fts", "vss"] = "fts"
-
-    @classmethod
-    def settings_customise_sources(
-        cls,
-        settings_cls: type[BaseSettings],
-        init_settings: PydanticBaseSettingsSource,
-        env_settings: PydanticBaseSettingsSource,
-        dotenv_settings: PydanticBaseSettingsSource,
-        file_secret_settings: PydanticBaseSettingsSource,
-    ) -> tuple[PydanticBaseSettingsSource, ...]:
-        return (
-            init_settings,
-            CliSettingsSource(settings_cls, cli_parse_args=True),
-            env_settings,
-            dotenv_settings,
-            file_secret_settings,
-        )
-
-
-class SearchResult(TypedDict):
-    url: str
-    title: str
-    description: str
-
-
-settings = Settings()
-
-conn = duckdb.connect("index.db", read_only=True)
+from nabchan_mcp_server.settings import settings
 
 
 instructions = "Nablarchのドキュメントを検索するMCPサーバー"
@@ -62,7 +19,9 @@ if settings.host:
 if settings.port:
     mcp.settings.port = settings.port
 
-search_index = idx.search_index if settings.search_type == "fts" else vec.search_index
+
+conn = connect_db()
+searcher = create_searcher(settings.search_type, conn)
 
 
 @mcp.tool(
@@ -82,20 +41,17 @@ def search_document(
     search_query: str = Field(description="検索クエリ"),
     result_limit: int = Field(description="検索結果の最大件数"),
 ) -> str:
-    results = [
-        SearchResult(url=url, title=title, description=description)
-        for url, title, description in search_index(
-            search_query=search_query,
-            result_limit=result_limit,
-            select_columns=["url", "title", "description"],
-            conn=conn,
-        )
-    ]
+    results = searcher.search(
+        search_query=search_query,
+        result_limit=result_limit,
+    )
 
     # mcp/server/fastmcp/server.pyの_convert_to_content関数で素朴にjson.dumps()
     # されているためUnicodeエスケープされないためにはstr、あるいはTextContent型で返す必要がある。
     # ここではstrで返す。
-    return json.dumps(results, ensure_ascii=False)
+    return json.dumps(
+        [result.model_dump(exclude={"score"}) for result in results], ensure_ascii=False
+    )
 
 
 if __name__ == "__main__":

@@ -28,5 +28,8 @@ dev = [
 ]
 
 [tool.taskipy.tasks]
+lint = "uvx ruff format --check && uvx ruff check"
 fix = "uvx ruff format && uvx ruff check --fix"
-test = "python -m unittest discover -s tests"
+test = "DB_FILE=test.db python -m unittest discover -s tests"
+integration_test = "DB_FILE=test.db python -m unittest discover -s tests -p it_*.py"
+build_test_db = "DB_FILE=test.db python -m tests.db"
