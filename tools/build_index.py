@@ -18,7 +18,7 @@ from dotenv import load_dotenv
 from langchain_core.rate_limiters import InMemoryRateLimiter
 
 from nabchan_mcp_server.db.connection import connect_db
-from nabchan_mcp_server.db.operations import DbOperations, Document
+from nabchan_mcp_server.db.operations import DbBuildingOperations, Document
 
 
 unnecessary_suffix_pattern = re.compile(r" — [^—]+$")
@@ -35,16 +35,16 @@ summarize_system_prompt = """あなたは技術文書を簡潔に要約する専
 
 async def add_document(queue: asyncio.Queue) -> None:
     with connect_db(read_only=False) as conn:
-        db_operations = DbOperations(conn)
-        db_operations.create_table()
+        operations = DbBuildingOperations(conn)
+        operations.create_table()
         while True:
             item = await queue.get()
             if item is None:
                 break
             document = cast(Document, item)
-            db_operations.insert_row(document)
+            operations.insert_row(document)
             queue.task_done()
-        db_operations.create_index()
+        operations.create_index()
 
 
 async def process_html_file(

@@ -21,7 +21,6 @@ class TestVss(unittest.TestCase):
         self.assertEqual(len(results), 1)
         result = results[0]
         self.assertEqual(result.title, "猫1")
-        self.assertEqual(result.score, 0.0)
 
     def test_part_of_text_1(self):
         results = self._searcher.search("猫", 2)

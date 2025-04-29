@@ -12,9 +12,15 @@ device = "cuda" if torch.cuda.is_available() else "cpu"
 model = model.to(device)
 
 
-def vectorize(text: str) -> list[float]:
+def vectorize_query(text: str) -> list[float]:
     with torch.inference_mode():
         embedding: torch.Tensor = model.encode_query(text, tokenizer)
+        return embedding[0].tolist()
+
+
+def vectorize_document(text: str) -> list[float]:
+    with torch.inference_mode():
+        embedding: torch.Tensor = model.encode_document(text, tokenizer)
         return embedding[0].tolist()
 
 
@@ -34,7 +40,7 @@ class VssSearcher(Searcher):
             LIMIT $limit
             """
 
-        embedding_vector = vectorize(search_query)
+        embedding_vector = vectorize_query(search_query)
 
         return [
             SearchResult(url=url, title=title, description=description, score=score)

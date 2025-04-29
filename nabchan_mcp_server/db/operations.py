@@ -1,6 +1,6 @@
 from duckdb import DuckDBPyConnection
 from nabchan_mcp_server.search.fts import tokenize
-from nabchan_mcp_server.search.vss import vectorize
+from nabchan_mcp_server.search.vss import vectorize_document
 from pydantic import BaseModel
 
 
@@ -12,7 +12,7 @@ class Document(BaseModel):
     text_content: str
 
 
-class DbOperations:
+class DbBuildingOperations:
     _conn: DuckDBPyConnection
 
     def __init__(self, conn: DuckDBPyConnection) -> None:
@@ -38,7 +38,7 @@ class DbOperations:
 
     def insert_row(self, document: Document) -> None:
         morpheme_sequence = tokenize(document.text_content)
-        embedding_vector = vectorize(document.text_content)
+        embedding_vector = vectorize_document(document.text_content)
         self._conn.execute(
             """
             INSERT INTO documents (url, title, description, markdown, morpheme_sequence, embedding_vector)
