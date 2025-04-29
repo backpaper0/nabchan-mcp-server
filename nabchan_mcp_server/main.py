@@ -16,12 +16,14 @@ from pydantic_settings import (
 )
 
 import nabchan_mcp_server.index as idx
+import nabchan_mcp_server.vector as vec
 
 
 class Settings(BaseSettings):
     transport: Literal["stdio", "sse"] = "stdio"
     host: str | None = None
     port: int | None = None
+    search_type: Literal["fts", "vss"] = "fts"
 
     @classmethod
     def settings_customise_sources(
@@ -60,6 +62,8 @@ if settings.host:
 if settings.port:
     mcp.settings.port = settings.port
 
+search_index = idx.search_index if settings.search_type == "fts" else vec.search_index
+
 
 @mcp.tool(
     description="URLが示すNablarchのドキュメントを返します。ドキュメントはMarkdown形式で返されます。"
@@ -80,7 +84,7 @@ def search_document(
 ) -> str:
     results = [
         SearchResult(url=url, title=title, description=description)
-        for url, title, description in idx.search_index(
+        for url, title, description in search_index(
             search_query=search_query,
             result_limit=result_limit,
             select_columns=["url", "title", "description"],
