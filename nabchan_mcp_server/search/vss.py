@@ -30,13 +30,16 @@ class VssSearcher(Searcher):
 
     def search(self, search_query: str, result_limit: int) -> list[SearchResult]:
         query = """
-            SELECT url, title, description, score
-            FROM (
-                SELECT *, array_distance(embedding_vector, CAST($embedding_vector AS FLOAT[2048])) AS score
-                FROM documents
-            ) docs
-            WHERE score IS NOT NULL
-            ORDER BY score
+            SELECT docs.url, docs.title, docs.description, vecs.score
+            FROM
+                documents docs
+            LEFT OUTER JOIN (
+                SELECT url, array_distance(embedding_vector, CAST($embedding_vector AS FLOAT[2048])) AS score
+                FROM document_vectors
+            ) vecs
+            ON docs.url = vecs.url
+            WHERE vecs.score IS NOT NULL
+            ORDER BY vecs.score
             LIMIT $limit
             """
 

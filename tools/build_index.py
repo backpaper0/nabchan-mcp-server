@@ -33,9 +33,9 @@ summarize_system_prompt = """あなたは技術文書を簡潔に要約する専
 """
 
 
-async def add_document(queue: asyncio.Queue) -> None:
+async def add_document(queue: asyncio.Queue, enabled_vss: bool) -> None:
     with connect_db(read_only=False) as conn:
-        operations = DbBuildingOperations(conn)
+        operations = DbBuildingOperations(conn, enabled_vss)
         operations.create_table()
         while True:
             item = await queue.get()
@@ -96,6 +96,7 @@ async def main(
     nablarch_document_path: Path,
     parallels: int,
     generate_description: Callable[[str], Awaitable[str]],
+    enabled_vss: bool,
 ) -> None:
     exclude_html_files = (Path("search.html"), Path("genindex.html"))
     html_files = [
@@ -113,7 +114,7 @@ async def main(
         for html_file in html_files
     ]
 
-    add_document_task = asyncio.create_task(add_document(queue))
+    add_document_task = asyncio.create_task(add_document(queue, enabled_vss))
     for coro in tqdm(asyncio.as_completed(tasks), total=len(tasks)):
         await coro
     await queue.put(None)
@@ -139,6 +140,11 @@ if __name__ == "__main__":
         type=str,
         default="gpt-4o-mini",
         help="要約に使用するLLMのモデル名。LLMを使用しない場合はnoneを指定してください。",
+    )
+    parser.add_argument(
+        "--enabled_vss",
+        action="store_true",
+        help="ベクトル類似検索のための処理を有効にするかどうか",
     )
     args = parser.parse_args()
 
@@ -176,5 +182,6 @@ if __name__ == "__main__":
             nablarch_document_path=nablarch_document_path,
             parallels=args.parallels,
             generate_description=generate_description,
+            enabled_vss=args.enabled_vss,
         )
     )

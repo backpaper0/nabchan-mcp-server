@@ -32,7 +32,7 @@ if __name__ == "__main__":
         tqdm(total=len(documents) + 2, desc="Build test db") as progress_bar,
         connect_db(read_only=False) as conn,
     ):
-        operations = DbBuildingOperations(conn)
+        operations = DbBuildingOperations(conn, enabled_vss=True)
 
         progress_bar.set_postfix_str("Create table")
         operations.create_table()
