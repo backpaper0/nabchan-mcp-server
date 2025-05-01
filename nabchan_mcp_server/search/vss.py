@@ -1,5 +1,5 @@
 import torch
-from transformers import AutoModel, AutoTokenizer
+from transformers import AutoModel, AutoTokenizer  # type: ignore
 import duckdb
 from nabchan_mcp_server.search.models import Searcher, SearchResult
 

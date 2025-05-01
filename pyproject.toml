@@ -24,12 +24,13 @@ dependencies = [
 
 [dependency-groups]
 dev = [
+    "pyright>=1.1.400",
     "taskipy>=1.14.1",
 ]
 
 [tool.taskipy.tasks]
-lint = "uvx ruff format --check && uvx ruff check"
-fix = "uvx ruff format && uvx ruff check --fix"
+lint = "uvx ruff format --check && uvx ruff check && pyright"
+fix = "uvx ruff format && uvx ruff check --fix && pyright"
 test = "DB_FILE=test.db python -m unittest discover -s tests"
 integration_test = "DB_FILE=test.db python -m unittest discover -s tests -p it_*.py"
 all_tests = "task test && task integration_test"

@@ -1,6 +1,6 @@
 from nabchan_mcp_server.search.models import Searcher, SearchResult
 import duckdb
-from lindera_py import Segmenter, Tokenizer, load_dictionary
+from lindera_py import Segmenter, Tokenizer, load_dictionary  # type: ignore
 
 dictionary = load_dictionary("ipadic")
 segmenter = Segmenter("normal", dictionary)
