@@ -9,6 +9,7 @@ dependencies = [
     "beautifulsoup4>=4.13.3",
     "duckdb>=1.2.2",
     "html2text>=2024.2.26",
+    "langchain-community>=0.3.23",
     "langchain-openai>=0.3.12",
     "lindera-py>=0.41.0",
     "mcp[cli]>=1.6.0",

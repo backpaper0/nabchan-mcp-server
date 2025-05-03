@@ -146,7 +146,19 @@ if __name__ == "__main__":
         action="store_true",
         help="ベクトル類似検索のための処理を有効にするかどうか",
     )
+    parser.add_argument(
+        "--enabled_cache",
+        action="store_true",
+        help="キャッシュを有効にするかどうか",
+    )
     args = parser.parse_args()
+
+    if args.enabled_cache:
+        from langchain_community.cache import SQLiteCache
+        from langchain_core.globals import set_llm_cache
+
+        cache = SQLiteCache()
+        set_llm_cache(cache)
 
     nablarch_document_path = (
         Path("nablarch.github.io") / "docs" / args.nablarch_version / "doc"
