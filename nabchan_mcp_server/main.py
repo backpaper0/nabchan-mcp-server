@@ -34,8 +34,17 @@ def read_document(url: str = Field(description="ドキュメントのURL")) -> s
     return result[0] if result else ""
 
 
+match settings.search_type:
+    case "fts":
+        _search_type = "BM25を用いた全文検索"
+    case "vss":
+        _search_type = "コサイン類似度を用いたベクトル類似検索"
+    case "hybrid":
+        _search_type = "BM25を用いた全文検索とコサイン類似度を用いたベクトル類似検索のハイブリッド検索"
+
+
 @mcp.tool(
-    description="Nablarchのドキュメントを全文検索します。結果にはURL、タイトル、概要が含まれます。"
+    description=f"Nablarchのドキュメントを検索します。検索ロジックは{_search_type}です。結果にはURL、タイトル、概要が含まれます。"
 )
 def search_document(
     search_query: str = Field(description="検索クエリ"),
