@@ -16,6 +16,7 @@ from langchain_openai.chat_models import ChatOpenAI
 from langchain_core.messages import SystemMessage, HumanMessage
 from dotenv import load_dotenv
 from langchain_core.rate_limiters import InMemoryRateLimiter
+from langchain_ollama import ChatOllama
 
 from nabchan_mcp_server.db.connection import connect_db
 from nabchan_mcp_server.db.operations import DbBuildingOperations, Document
@@ -122,6 +123,8 @@ async def main(
 
 
 if __name__ == "__main__":
+    load_dotenv()
+
     parser = ArgumentParser()
     parser.add_argument(
         "--nablarch_version",
@@ -139,7 +142,13 @@ if __name__ == "__main__":
         "--llm",
         type=str,
         default="gpt-4o-mini",
-        help="要約に使用するLLMのモデル名。LLMを使用しない場合はnoneを指定してください。",
+        help="要約に使用するLLMのモデル名。LLMを使用しない場合はnoneを指定してください。Ollamaを使う場合は先頭にollama://をつけてください。",
+    )
+    parser.add_argument(
+        "--requests_per_second",
+        type=float,
+        default=1.0,
+        help="LLMのリクエストレート制限の値。デフォルトは1.0です。",
     )
     parser.add_argument(
         "--enabled_vss",
@@ -164,20 +173,22 @@ if __name__ == "__main__":
         Path("nablarch.github.io") / "docs" / args.nablarch_version / "doc"
     )
 
-    if args.llm == "none":
+    llm_model = cast(str, args.llm)
+    if llm_model == "none":
 
         async def generate_description(content: str) -> str:
             return content[:300]
     else:
-        load_dotenv()
-        rate_limiter = InMemoryRateLimiter(
-            requests_per_second=1.0, check_every_n_seconds=1.0, max_bucket_size=1.0
-        )
-        llm = ChatOpenAI(
-            model=args.llm,
-            temperature=0.0,
-            max_retries=10,
-            rate_limiter=rate_limiter,
+        rate_limiter = InMemoryRateLimiter(requests_per_second=args.requests_per_second)
+        llm = (
+            ChatOllama(model=llm_model.removeprefix("ollama://"))
+            if llm_model.startswith("ollama://")
+            else ChatOpenAI(
+                model=llm_model,
+                temperature=0.0,
+                max_retries=10,
+                rate_limiter=rate_limiter,
+            )
         )
 
         async def generate_description(content: str) -> str:
@@ -187,7 +198,11 @@ if __name__ == "__main__":
                     HumanMessage(content),
                 ]
             )
-            return str(ai_message.content)
+            content = str(ai_message.content)
+            thinking_phrase = "\n</think>\n\n"
+            if thinking_phrase in content:
+                content = content.split(thinking_phrase)[-1]
+            return content
 
     asyncio.run(
         main(
