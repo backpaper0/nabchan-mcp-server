@@ -2,25 +2,24 @@
 インデックスを構築するスクリプト。
 """
 
-from argparse import ArgumentParser
 import asyncio
+import re
+from argparse import ArgumentParser
 from pathlib import Path
 from typing import Awaitable, Callable, cast
-import aiofiles
 
+import aiofiles
 from bs4 import BeautifulSoup
-from tqdm.asyncio import tqdm
-from html2text import html2text
-import re
-from langchain_openai.chat_models import ChatOpenAI
-from langchain_core.messages import SystemMessage, HumanMessage
 from dotenv import load_dotenv
+from html2text import html2text
+from langchain_core.messages import HumanMessage, SystemMessage
 from langchain_core.rate_limiters import InMemoryRateLimiter
 from langchain_ollama import ChatOllama
+from langchain_openai.chat_models import ChatOpenAI
+from tqdm.asyncio import tqdm
 
 from nabchan_mcp_server.db.connection import connect_db
 from tools.operations import DbBuildingOperations, Document
-
 
 unnecessary_suffix_pattern = re.compile(r" — [^—]+$")
 

@@ -27,13 +27,14 @@ dependencies = [
 [dependency-groups]
 dev = [
     "coverage>=7.8.0",
+    "isort>=6.0.1",
     "pyright>=1.1.400",
     "taskipy>=1.14.1",
 ]
 
 [tool.taskipy.tasks]
 lint = "uvx ruff format --check && uvx ruff check && pyright"
-fix = "uvx ruff format && uvx ruff check --fix && pyright"
+fix = "uvx ruff format && uvx ruff check --fix && isort nabchan_mcp_server tests tools && pyright"
 test = "DB_FILE=test.db python -m unittest discover -s tests"
 coverage = "DB_FILE=test.db coverage run -m unittest discover -s tests && coverage report -m -i --include='./*' && coverage html -i --include='./*'"
 integration_test = "DB_FILE=test.db python -m unittest discover -s tests -p it_*.py"

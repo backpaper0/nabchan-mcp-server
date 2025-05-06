@@ -1,8 +1,9 @@
 import json
-from typing import cast
-from mcp.client.stdio import stdio_client
 import unittest
+from typing import cast
+
 from mcp import ClientSession, StdioServerParameters
+from mcp.client.stdio import stdio_client
 from mcp.types import TextContent
 
 _server_params = StdioServerParameters(

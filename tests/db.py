@@ -1,7 +1,7 @@
-from nabchan_mcp_server.db.connection import connect_db
-from tools.operations import DbBuildingOperations, Document
 from tqdm import tqdm
 
+from nabchan_mcp_server.db.connection import connect_db
+from tools.operations import DbBuildingOperations, Document
 
 if __name__ == "__main__":
     documents = [

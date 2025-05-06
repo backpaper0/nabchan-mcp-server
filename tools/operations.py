@@ -1,7 +1,9 @@
 from typing import Callable
+
 from duckdb import DuckDBPyConnection
-from nabchan_mcp_server.search.fts import tokenize
 from pydantic import BaseModel
+
+from nabchan_mcp_server.search.fts import tokenize
 
 
 class Document(BaseModel):

@@ -3,13 +3,12 @@
 """
 
 import json
-
 from argparse import ArgumentParser
 from typing import cast
+
+from nabchan_mcp_server.db.connection import connect_db
 from nabchan_mcp_server.search.factory import create_searcher
 from nabchan_mcp_server.search.models import SearchType
-from nabchan_mcp_server.db.connection import connect_db
-
 
 if __name__ == "__main__":
     parser = ArgumentParser()

@@ -1,4 +1,5 @@
-from duckdb import connect, DuckDBPyConnection
+from duckdb import DuckDBPyConnection, connect
+
 from nabchan_mcp_server.settings import settings
 
 

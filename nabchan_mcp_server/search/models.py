@@ -1,5 +1,6 @@
 from abc import ABC, abstractmethod
 from typing import Literal
+
 import duckdb
 from pydantic import BaseModel
 

@@ -1,6 +1,7 @@
-from nabchan_mcp_server.search.models import Searcher, SearchType
-from nabchan_mcp_server.search.fts import FtsSearcher
 from duckdb import DuckDBPyConnection
+
+from nabchan_mcp_server.search.fts import FtsSearcher
+from nabchan_mcp_server.search.models import Searcher, SearchType
 
 
 def create_searcher(search_type: SearchType, conn: DuckDBPyConnection) -> Searcher:

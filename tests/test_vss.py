@@ -1,7 +1,9 @@
 import unittest
-from nabchan_mcp_server.search.vss import VssSearcher
-from nabchan_mcp_server.db.connection import connect_db
+
 from duckdb import DuckDBPyConnection
+
+from nabchan_mcp_server.db.connection import connect_db
+from nabchan_mcp_server.search.vss import VssSearcher
 
 
 class TestVss(unittest.TestCase):

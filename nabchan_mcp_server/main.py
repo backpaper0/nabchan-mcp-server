@@ -3,13 +3,13 @@ MCPサーバー本体。
 """
 
 import json
+
 from mcp.server.fastmcp import FastMCP
 from pydantic import Field
-from nabchan_mcp_server.search.factory import create_searcher
+
 from nabchan_mcp_server.db.connection import connect_db
-
+from nabchan_mcp_server.search.factory import create_searcher
 from nabchan_mcp_server.settings import settings
-
 
 instructions = "Nablarchのドキュメントを検索するMCPサーバー"
 
