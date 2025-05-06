@@ -5,37 +5,37 @@ description = "Nablarchの解説書をもとにしてNablarchの情報を返すM
 readme = "README.md"
 requires-python = ">=3.11"
 dependencies = [
-    "aiofiles>=24.1.0",
-    "beautifulsoup4>=4.13.3",
     "duckdb>=1.2.2",
-    "html2text>=2024.2.26",
-    "langchain-community>=0.3.23",
-    "langchain-ollama>=0.3.2",
-    "langchain-openai>=0.3.12",
     "lindera-py>=0.41.0",
     "mcp[cli]>=1.6.0",
     "pydantic>=2.11.2",
     "pydantic-settings>=2.8.1",
     "python-dotenv>=1.1.0",
     "sentencepiece>=0.2.0",
-    "tiktoken>=0.9.0",
     "torch>=2.7.0",
-    "tqdm>=4.67.1",
     "transformers>=4.51.3",
 ]
 
 [dependency-groups]
 dev = [
+    "aiofiles>=24.1.0",
+    "beautifulsoup4>=4.13.3",
     "coverage>=7.8.0",
     "diskcache>=5.6.3",
+    "html2text>=2024.2.26",
     "isort>=6.0.1",
+    "langchain-community>=0.3.23",
+    "langchain-ollama>=0.3.2",
+    "langchain-openai>=0.3.12",
     "pyright>=1.1.400",
+    "ruff>=0.11.8",
     "taskipy>=1.14.1",
+    "tqdm>=4.67.1",
 ]
 
 [tool.taskipy.tasks]
-lint = "uvx ruff format --check && uvx ruff check && pyright"
-fix = "isort nabchan_mcp_server tests tools && uvx ruff format && uvx ruff check --fix && pyright"
+lint = "ruff format --check && ruff check && pyright"
+fix = "isort nabchan_mcp_server tests tools && ruff format && ruff check --fix && pyright"
 test = "DB_FILE=test.db python -m unittest discover -s tests"
 coverage = "DB_FILE=test.db coverage run -m unittest discover -s tests && coverage report -m -i --include='./*' && coverage html -i --include='./*'"
 integration_test = "DB_FILE=test.db python -m unittest discover -s tests -p it_*.py"

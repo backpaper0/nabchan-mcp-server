@@ -16,3 +16,4 @@ nablarch-document/
 .vscode/
 .env
 .coverage
+requirements.txt

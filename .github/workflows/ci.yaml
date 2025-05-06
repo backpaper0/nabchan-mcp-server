@@ -12,7 +12,7 @@ permissions:
 
 jobs:
   lint:
-    name: static analysis
+    name: static analysis and test
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -27,8 +27,10 @@ jobs:
           uv sync
       - name: lint
         run: |
-          uvx ruff format --check
-          uvx ruff check
+          uv run task lint
+      - name: test
+        run: |
+          uv run task all_tests
 
   deploy:
     name: Build container image
@@ -38,7 +40,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with: 
-          submodules: true
+          submodules: false
       - uses: actions/setup-python@v5
         with:
           python-version: 3.11
@@ -46,11 +48,9 @@ jobs:
         run: |
           pip install uv
           uv sync
-      - name: build index
+      - name: export requirements.txt
         run: |
-          uv run -m tools.build_index
-        env:
-          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          uv export --no-group dev -o requirements.txt
       - name: docker build and push
         env:
           CONTAINER_IMAGE: ghcr.io/backpaper0/nabchan-mcp-server

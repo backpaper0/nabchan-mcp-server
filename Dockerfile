@@ -1,11 +1,8 @@
 FROM python:3.11
 
-RUN pip install uv
+COPY requirements.txt /workspace/
 
-COPY pyproject.toml /workspace/
-COPY uv.lock /workspace/
-
-RUN uv --directory /workspace sync
+RUN pip install -r /workspace/requirements.txt
 
 COPY nabchan_mcp_server /workspace/nabchan_mcp_server
 COPY documents.db /workspace/documents.db
@@ -13,8 +10,8 @@ COPY documents.db /workspace/documents.db
 WORKDIR /workspace
 
 # DuckDBのextensionをダウンロードしておく
-RUN uv run python -m nabchan_mcp_server.db.connection
+RUN python -m nabchan_mcp_server.db.connection
 
 ENV TRANSPORT=sse
 
-ENTRYPOINT ["uv", "run", "python", "-m", "nabchan_mcp_server.main"]
+ENTRYPOINT ["python", "-m", "nabchan_mcp_server.main"]
