@@ -19,7 +19,7 @@ from langchain_core.rate_limiters import InMemoryRateLimiter
 from langchain_ollama import ChatOllama
 
 from nabchan_mcp_server.db.connection import connect_db
-from nabchan_mcp_server.db.operations import DbBuildingOperations, Document
+from tools.operations import DbBuildingOperations, Document
 
 
 unnecessary_suffix_pattern = re.compile(r" — [^—]+$")

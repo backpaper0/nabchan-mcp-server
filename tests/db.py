@@ -1,5 +1,5 @@
 from nabchan_mcp_server.db.connection import connect_db
-from nabchan_mcp_server.db.operations import DbBuildingOperations, Document
+from tools.operations import DbBuildingOperations, Document
 from tqdm import tqdm
 
 
