@@ -13,3 +13,4 @@ nablarch-document/
 *.db
 .vscode/
 .env
+.coverage
