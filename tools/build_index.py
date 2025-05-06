@@ -12,6 +12,8 @@ import aiofiles
 from bs4 import BeautifulSoup
 from dotenv import load_dotenv
 from html2text import html2text
+from langchain_community.cache import SQLiteCache
+from langchain_core.globals import set_llm_cache
 from langchain_core.messages import HumanMessage, SystemMessage
 from langchain_core.rate_limiters import InMemoryRateLimiter
 from langchain_ollama import ChatOllama
@@ -149,24 +151,10 @@ if __name__ == "__main__":
         default=1.0,
         help="LLMのリクエストレート制限の値。デフォルトは1.0です。",
     )
-    parser.add_argument(
-        "--enabled_vss",
-        action="store_true",
-        help="ベクトル類似検索のための処理を有効にするかどうか",
-    )
-    parser.add_argument(
-        "--enabled_cache",
-        action="store_true",
-        help="キャッシュを有効にするかどうか",
-    )
     args = parser.parse_args()
 
-    if args.enabled_cache:
-        from langchain_community.cache import SQLiteCache
-        from langchain_core.globals import set_llm_cache
-
-        cache = SQLiteCache()
-        set_llm_cache(cache)
+    cache = SQLiteCache()
+    set_llm_cache(cache)
 
     nablarch_document_path = (
         Path("nablarch.github.io") / "docs" / args.nablarch_version / "doc"
@@ -208,6 +196,6 @@ if __name__ == "__main__":
             nablarch_document_path=nablarch_document_path,
             parallels=args.parallels,
             generate_description=generate_description,
-            enabled_vss=args.enabled_vss,
+            enabled_vss=True,
         )
     )
