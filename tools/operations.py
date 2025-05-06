@@ -23,9 +23,17 @@ class DbBuildingOperations:
         self._conn = conn
         self._enabled_vss = enabled_vss
         if enabled_vss:
+            import diskcache
+
             from nabchan_mcp_server.search.vss import vectorize_document
 
-            self._vectorize_document = vectorize_document
+            cache = diskcache.Cache(".diskcache")
+
+            @cache.memoize()
+            def cached_vectorized_document(text: str) -> list[float]:
+                return vectorize_document(text)
+
+            self._vectorize_document = cached_vectorized_document
         else:
             self._vectorize_document = lambda _: []
 
