@@ -35,7 +35,7 @@ dev = [
 
 [tool.taskipy.tasks]
 lint = "uvx ruff format --check && uvx ruff check && pyright"
-fix = "uvx ruff format && uvx ruff check --fix && isort nabchan_mcp_server tests tools && pyright"
+fix = "isort nabchan_mcp_server tests tools && uvx ruff format && uvx ruff check --fix && pyright"
 test = "DB_FILE=test.db python -m unittest discover -s tests"
 coverage = "DB_FILE=test.db coverage run -m unittest discover -s tests && coverage report -m -i --include='./*' && coverage html -i --include='./*'"
 integration_test = "DB_FILE=test.db python -m unittest discover -s tests -p it_*.py"

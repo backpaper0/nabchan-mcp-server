@@ -1,7 +1,10 @@
 from typing import Literal
 
-from pydantic_settings import (BaseSettings, CliSettingsSource,
-                               PydanticBaseSettingsSource)
+from pydantic_settings import (
+    BaseSettings,
+    CliSettingsSource,
+    PydanticBaseSettingsSource,
+)
 
 from nabchan_mcp_server.search.models import SearchType
 
