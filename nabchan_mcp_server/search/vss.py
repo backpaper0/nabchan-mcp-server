@@ -35,12 +35,12 @@ class VssSearcher(Searcher):
             FROM
                 documents docs
             LEFT OUTER JOIN (
-                SELECT url, array_distance(content, CAST($content AS FLOAT[2048])) AS score
+                SELECT url, array_cosine_similarity(content, CAST($content AS FLOAT[2048])) AS score
                 FROM document_vectors
             ) scores
             ON docs.url = scores.url
             WHERE scores.score IS NOT NULL
-            ORDER BY scores.score
+            ORDER BY 4 DESC, 1 ASC
             LIMIT $limit
             """
 

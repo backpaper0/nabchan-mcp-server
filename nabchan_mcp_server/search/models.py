@@ -4,7 +4,7 @@ from typing import Literal
 import duckdb
 from pydantic import BaseModel
 
-SearchType = Literal["fts", "vss"]
+SearchType = Literal["fts", "vss", "hybrid"]
 
 
 class SearchResult(BaseModel):

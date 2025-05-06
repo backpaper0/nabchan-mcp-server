@@ -26,7 +26,7 @@ class FtsSearcher(Searcher):
             ) scores
             ON docs.url = scores.url
             WHERE scores.score IS NOT NULL
-            ORDER BY scores.score DESC
+            ORDER BY 4 DESC, 1 ASC
             LIMIT $limit
             """
 

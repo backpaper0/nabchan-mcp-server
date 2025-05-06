@@ -12,3 +12,7 @@ def create_searcher(search_type: SearchType, conn: DuckDBPyConnection) -> Search
             from nabchan_mcp_server.search.vss import VssSearcher
 
             return VssSearcher(conn)
+        case "hybrid":
+            from nabchan_mcp_server.search.hybrid import HybridSearcher
+
+            return HybridSearcher(conn)
