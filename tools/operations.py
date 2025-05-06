@@ -8,7 +8,7 @@ class Document(BaseModel):
     url: str
     title: str
     description: str
-    markdown: str
+    content: str
     text_content: str
 
 
@@ -30,22 +30,31 @@ class DbBuildingOperations:
     def create_table(self) -> None:
         self._conn.execute(
             """
-            CREATE TABLE IF NOT EXISTS documents (
+            CREATE TABLE documents (
                 url TEXT,
                 title TEXT,
                 description TEXT,
-                markdown TEXT,
-                morpheme_sequence TEXT,
+                content TEXT,
                 PRIMARY KEY (url)
+            )
+            """
+        )
+        self._conn.execute(
+            """
+            CREATE TABLE word_segmentations (
+                url TEXT,
+                content TEXT,
+                PRIMARY KEY (url),
+                FOREIGN KEY (url) REFERENCES documents(url)
             )
             """
         )
         if self._enabled_vss:
             self._conn.execute(
                 """
-                CREATE TABLE IF NOT EXISTS document_vectors (
+                CREATE TABLE document_vectors (
                     url TEXT,
-                    embedding_vector FLOAT[2048],
+                    content FLOAT[2048],
                     PRIMARY KEY (url),
                     FOREIGN KEY (url) REFERENCES documents(url)
                 )
@@ -53,27 +62,32 @@ class DbBuildingOperations:
             )
 
     def insert_row(self, document: Document) -> None:
-        morpheme_sequence = tokenize(document.text_content)
         self._conn.execute(
             """
-            INSERT INTO documents (url, title, description, markdown, morpheme_sequence)
-            VALUES ($url, $title, $description, $markdown, $morpheme_sequence)
+            INSERT INTO documents (url, title, description, content)
+            VALUES ($url, $title, $description, $content)
+            """,
+            document.model_dump(exclude={"text_content"}),
+        )
+        self._conn.execute(
+            """
+            INSERT INTO word_segmentations (url, content)
+            VALUES ($url, $content)
             """,
             {
-                **document.model_dump(exclude={"text_content"}),
-                "morpheme_sequence": morpheme_sequence,
+                "url": document.url,
+                "content": tokenize(document.text_content),
             },
         )
         if self._enabled_vss:
-            embedding_vector = self._vectorize_document(document.text_content)
             self._conn.execute(
                 """
-                INSERT INTO document_vectors (url, embedding_vector)
-                VALUES ($url, $embedding_vector)
+                INSERT INTO document_vectors (url, content)
+                VALUES ($url, $content)
                 """,
                 {
                     "url": document.url,
-                    "embedding_vector": embedding_vector,
+                    "content": self._vectorize_document(document.text_content),
                 },
             )
 
@@ -82,7 +96,7 @@ class DbBuildingOperations:
         self._conn.load_extension("fts")
         self._conn.execute(
             """
-            PRAGMA create_fts_index('documents', 'url', 'morpheme_sequence',
+            PRAGMA create_fts_index('word_segmentations', 'url', 'content',
                 stemmer = 'none', stopwords = 'none', ignore = '', strip_accents = false, lower = false)
             """
         )
@@ -92,6 +106,6 @@ class DbBuildingOperations:
             self._conn.execute("SET hnsw_enable_experimental_persistence = true")
             self._conn.execute(
                 """
-                CREATE INDEX documents_hsnw_index ON document_vectors USING HNSW (embedding_vector)
+                CREATE INDEX documents_hsnw_index ON document_vectors USING HNSW (content)
                 """
             )

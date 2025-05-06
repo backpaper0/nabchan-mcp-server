@@ -29,7 +29,7 @@ searcher = create_searcher(settings.search_type, conn)
 )
 def read_document(url: str = Field(description="ドキュメントのURL")) -> str:
     result = conn.execute(
-        "SELECT markdown FROM documents WHERE url = $url", {"url": url}
+        "SELECT content FROM documents WHERE url = $url", {"url": url}
     ).fetchone()
     return result[0] if result else ""
 

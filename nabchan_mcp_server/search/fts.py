@@ -17,22 +17,24 @@ class FtsSearcher(Searcher):
 
     def search(self, search_query: str, result_limit: int) -> list[SearchResult]:
         query = """
-            SELECT url, title, description, score
-            FROM (
-                SELECT *, fts_main_documents.match_bm25(url, $morpheme_sequence, fields := 'morpheme_sequence') AS score
-                FROM documents
-            ) docs
-            WHERE score IS NOT NULL
-            ORDER BY score DESC
+            SELECT docs.url, docs.title, docs.description, scores.score
+            FROM documents docs
+            LEFT OUTER JOIN (
+                SELECT url, fts_main_word_segmentations.match_bm25(url, $content, fields := 'content') AS score
+                FROM word_segmentations
+            ) scores
+            ON docs.url = scores.url
+            WHERE scores.score IS NOT NULL
+            ORDER BY scores.score DESC
             LIMIT $limit
             """
 
-        morpheme_sequence = tokenize(search_query)
+        content = tokenize(search_query)
 
         return [
             SearchResult(url=url, title=title, description=description, score=score)
             for url, title, description, score in self._conn.execute(
                 query,
-                {"morpheme_sequence": morpheme_sequence, "limit": result_limit},
+                {"content": content, "limit": result_limit},
             ).fetchall()
         ]

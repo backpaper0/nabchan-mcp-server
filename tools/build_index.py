@@ -77,18 +77,18 @@ async def process_html_file(
                 else "No Title"
             )
             title = unnecessary_suffix_pattern.sub("", title)
-            content = main_content.get_text(strip=True)
+            text_content = main_content.get_text(strip=True)
             url = "https://" + "/".join(html_file.parts)
-            description = await generate_description(content)
-            markdown = html2text(
+            description = await generate_description(text_content)
+            content = html2text(
                 "".join([str(child) for child in main_content.children])
             )
             document = Document(
                 url=url,
                 title=title,
                 description=description,
-                markdown=markdown,
-                text_content=content,
+                content=content,
+                text_content=text_content,
             )
             await queue.put(document)
 

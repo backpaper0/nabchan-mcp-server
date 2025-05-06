@@ -30,25 +30,25 @@ class VssSearcher(Searcher):
 
     def search(self, search_query: str, result_limit: int) -> list[SearchResult]:
         query = """
-            SELECT docs.url, docs.title, docs.description, vecs.score
+            SELECT docs.url, docs.title, docs.description, scores.score
             FROM
                 documents docs
             LEFT OUTER JOIN (
-                SELECT url, array_distance(embedding_vector, CAST($embedding_vector AS FLOAT[2048])) AS score
+                SELECT url, array_distance(content, CAST($content AS FLOAT[2048])) AS score
                 FROM document_vectors
-            ) vecs
-            ON docs.url = vecs.url
-            WHERE vecs.score IS NOT NULL
-            ORDER BY vecs.score
+            ) scores
+            ON docs.url = scores.url
+            WHERE scores.score IS NOT NULL
+            ORDER BY scores.score
             LIMIT $limit
             """
 
-        embedding_vector = vectorize_query(search_query)
+        content = vectorize_query(search_query)
 
         return [
             SearchResult(url=url, title=title, description=description, score=score)
             for url, title, description, score in self._conn.execute(
                 query,
-                {"embedding_vector": embedding_vector, "limit": result_limit},
+                {"content": content, "limit": result_limit},
             ).fetchall()
         ]
