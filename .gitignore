@@ -13,7 +13,6 @@ nablarch-document/
 *.db
 !documents.db
 !test.db
-.vscode/
 .env
 .coverage
 requirements.txt
