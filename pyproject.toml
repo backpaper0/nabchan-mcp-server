@@ -5,6 +5,7 @@ description = "Nablarchの解説書をもとにしてNablarchの情報を返すM
 readme = "README.md"
 requires-python = ">=3.11"
 dependencies = [
+    "beautifulsoup4>=4.13.3",
     "duckdb>=1.2.2",
     "lindera-py>=0.41.0",
     "mcp[cli]>=1.6.0",
@@ -19,7 +20,6 @@ dependencies = [
 [dependency-groups]
 dev = [
     "aiofiles>=24.1.0",
-    "beautifulsoup4>=4.13.3",
     "coverage>=7.8.0",
     "diskcache>=5.6.3",
     "html2text>=2024.2.26",
