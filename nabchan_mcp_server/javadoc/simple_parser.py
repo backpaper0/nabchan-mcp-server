@@ -66,6 +66,32 @@ class JavadocParser:
             pass
         return parser
     
+    def _extract_summary_from_content(self, content: str, summary_type: str) -> str:
+        """Extract summary from HTML content using pattern matching."""
+        try:
+            # Look for different patterns based on summary type
+            if summary_type == "package":
+                # Package description pattern: <section class="package-description">...<div class="block">...</div>
+                match = re.search(r'<section[^>]*class="[^"]*package-description[^"]*"[^>]*>.*?<div[^>]*class="[^"]*block[^"]*"[^>]*>(.*?)</div>', content, re.DOTALL | re.IGNORECASE)
+            elif summary_type == "class":
+                # Class description pattern: <section class="class-description">...<div class="block">...</div>
+                match = re.search(r'<section[^>]*class="[^"]*class-description[^"]*"[^>]*>.*?<div[^>]*class="[^"]*block[^"]*"[^>]*>(.*?)</div>', content, re.DOTALL | re.IGNORECASE)
+            elif summary_type == "class_summary":
+                # Class summary in package file: <div class="col-last...class-summary..."><div class="block">...</div>
+                match = re.search(r'<div[^>]*class="[^"]*col-last[^"]*class-summary[^"]*"[^>]*>.*?<div[^>]*class="[^"]*block[^"]*"[^>]*>(.*?)</div>', content, re.DOTALL | re.IGNORECASE)
+            else:
+                return ""
+            
+            if match:
+                # Clean up HTML tags and normalize whitespace
+                summary = match.group(1)
+                summary = re.sub(r'<[^>]+>', ' ', summary)  # Remove HTML tags
+                summary = re.sub(r'\s+', ' ', summary)  # Normalize whitespace
+                return summary.strip()
+        except Exception:
+            pass
+        return ""
+    
     def get_all_packages(self) -> List[Dict[str, str]]:
         """Get a list of all packages with their names."""
         packages = []
@@ -103,31 +129,80 @@ class JavadocParser:
         if not summary_file.exists():
             raise ValueError(f"Package not found: {package_name}")
         
+        content = summary_file.read_text(encoding='utf-8')
         parser = self._parse_html_file(summary_file)
         
-        # Extract classes from links
+        # Extract package summary
+        package_summary = self._extract_summary_from_content(content, "package")
+        
+        # Extract classes with summaries
         classes = []
-        for link in parser.links:
-            href = link['href']
-            text = link['text']
+        
+        # Use regex to find class entries in the summary table
+        # Pattern matches two-column layout with class name and description
+        class_pattern = r'<div[^>]*class="[^"]*col-first[^"]*class-summary[^"]*"[^>]*>.*?<a[^>]*href="([^"]+\.html)"[^>]*title="[^"]*">([^<]+)</a></div>\s*<div[^>]*class="[^"]*col-last[^"]*class-summary[^"]*"[^>]*>(.*?)</div>'
+        
+        for match in re.finditer(class_pattern, content, re.DOTALL | re.IGNORECASE):
+            href = match.group(1)
+            class_name = match.group(2).strip()
+            summary_section = match.group(3)
             
-            # Filter for class links (ending with .html but not package-*.html)
-            if (href.endswith('.html') and 
-                not href.startswith('package-') and 
-                not href.startswith('../') and
-                not href.startswith('#') and
-                '/' not in href and  # Exclude links to other packages
-                text and 
-                not text.startswith('All ') and
-                text not in ['Prev', 'Next', 'Frames', 'No Frames']):
+            # Extract summary from the block div (block div is already at the top level)
+            block_match = re.search(r'<div[^>]*class="[^"]*block[^"]*"[^>]*>(.*?)</div>', summary_section, re.DOTALL | re.IGNORECASE)
+            class_summary = ""
+            if block_match:
+                class_summary = block_match.group(1)
+                class_summary = re.sub(r'<[^>]+>', ' ', class_summary)  # Remove HTML tags
+                class_summary = re.sub(r'\s+', ' ', class_summary)  # Normalize whitespace
+                class_summary = class_summary.strip()
+            else:
+                # The summary_section itself might be the content we want, try direct text extraction
+                text_only = re.sub(r'<[^>]+>', ' ', summary_section)
+                text_only = re.sub(r'\s+', ' ', text_only).strip()
+                if text_only and len(text_only) > 5:  # Avoid capturing just whitespace
+                    class_summary = text_only
+            
+            # Determine type based on content or default to class
+            if 'interface' in summary_section.lower():
+                class_type = 'interface'
+            elif 'enum' in summary_section.lower():
+                class_type = 'enum'
+            elif 'annotation' in summary_section.lower():
+                class_type = 'annotation'
+            elif 'exception' in class_name.lower():
+                class_type = 'exception'
+            else:
+                class_type = 'class'
+            
+            classes.append({
+                'name': class_name,
+                'type': class_type,
+                'summary': class_summary
+            })
+        
+        # If regex didn't find anything, fall back to link parsing
+        if not classes:
+            for link in parser.links:
+                href = link['href']
+                text = link['text']
                 
-                # Only include if it looks like a valid class name
-                if text and text[0].isupper() and '.' not in text:
-                    classes.append({
-                        'name': text,
-                        'type': 'class',
-                        'summary': ''
-                    })
+                # Filter for class links (ending with .html but not package-*.html)
+                if (href.endswith('.html') and 
+                    not href.startswith('package-') and 
+                    not href.startswith('../') and
+                    not href.startswith('#') and
+                    '/' not in href and  # Exclude links to other packages
+                    text and 
+                    not text.startswith('All ') and
+                    text not in ['Prev', 'Next', 'Frames', 'No Frames']):
+                    
+                    # Only include if it looks like a valid class name
+                    if text and text[0].isupper() and '.' not in text:
+                        classes.append({
+                            'name': text,
+                            'type': 'class',
+                            'summary': ''
+                        })
         
         # Remove duplicates
         seen = set()
@@ -139,7 +214,7 @@ class JavadocParser:
         
         return {
             'name': package_name,
-            'summary': '',
+            'summary': package_summary,
             'classes': sorted(unique_classes, key=lambda x: x['name'])
         }
     
@@ -154,47 +229,121 @@ class JavadocParser:
         if not class_file.exists():
             # Try to find it by searching
             for html_file in self.javadoc_path.rglob(f"{class_simple_name}.html"):
-                if html_file.read_text(encoding='utf-8').find(class_name) != -1:
+                content = html_file.read_text(encoding='utf-8')
+                if content.find(class_name) != -1:
                     class_file = html_file
                     break
             else:
                 raise ValueError(f"Class not found: {class_name}")
         
-        parser = self._parse_html_file(class_file)
-        
-        # Extract methods from the content
-        methods = []
         content = class_file.read_text(encoding='utf-8')
         
-        # Look for method signatures using regex
-        # Pattern for method names in Javadoc (simplified)
-        method_pattern = re.compile(r'<a[^>]+>([a-zA-Z_]\w*)</a>\s*\([^)]*\)')
+        # Determine type from title or content
+        type_info = "class"
+        title_match = re.search(r'<h\d[^>]*class="[^"]*title[^"]*"[^>]*>(.*?)</h\d>', content, re.IGNORECASE)
+        if title_match:
+            title_text = title_match.group(1).lower()
+            if 'interface' in title_text:
+                type_info = "interface"
+            elif 'enum' in title_text:
+                type_info = "enum"
+            elif 'annotation' in title_text:
+                type_info = "annotation"
+            elif 'exception' in title_text:
+                type_info = "exception"
+            elif 'error' in title_text:
+                type_info = "error"
         
-        for match in method_pattern.finditer(content):
-            method_name = match.group(1)
-            # Filter out common non-method names
-            if method_name not in ['Class', 'Interface', 'Enum', 'All', 'Package']:
+        # Extract class summary
+        class_summary = self._extract_summary_from_content(content, "class")
+        
+        # Extract methods with summaries
+        methods = []
+        
+        # Pattern for method summary table entries in three-column format  
+        # Each row has col-first, col-second, col-last with same row-color class
+        row_pattern = r'<div[^>]*class="[^"]*col-first[^"]*(?:even|odd)-row-color[^"]*method-summary-table[^"]*"[^>]*>(.*?)</div>\s*<div[^>]*class="[^"]*col-second[^"]*(?:even|odd)-row-color[^"]*method-summary-table[^"]*"[^>]*>(.*?)</div>\s*<div[^>]*class="[^"]*col-last[^"]*(?:even|odd)-row-color[^"]*method-summary-table[^"]*"[^>]*>(.*?)</div>'
+        
+        for row_match in re.finditer(row_pattern, content, re.DOTALL | re.IGNORECASE):
+            col2 = row_match.group(2)  # Method column
+            col3 = row_match.group(3)  # Description column
+            
+            # Extract method name from col2
+            method_match = re.search(r'<a[^>]*class="[^"]*member-name-link[^"]*"[^>]*>([^<]+)</a>', col2)
+            if method_match:
+                method_name = method_match.group(1).strip()
+                
+                # Extract summary from col3
+                # Handle potential whitespace around block div
+                block_match = re.search(r'<div[^>]*class="[^"]*block[^"]*"[^>]*>\s*(.*?)\s*</div>', col3, re.DOTALL)
+                method_summary = ""
+                if block_match:
+                    method_summary = block_match.group(1)
+                    method_summary = re.sub(r'<[^>]+>', ' ', method_summary)  # Remove HTML tags
+                    method_summary = re.sub(r'\s+', ' ', method_summary)  # Normalize whitespace
+                    method_summary = method_summary.strip()
+                else:
+                    # Try direct text extraction from col3 if no block div
+                    text_only = re.sub(r'<[^>]+>', ' ', col3)
+                    text_only = re.sub(r'\s+', ' ', text_only).strip()
+                    if text_only and len(text_only) > 5:
+                        method_summary = text_only
+                
+                # Try to extract signature from col2
+                signature_match = re.search(r'<code[^>]*>(.*?)</code>', col2, re.DOTALL | re.IGNORECASE)
+                signature = method_name + "(...)"
+                if signature_match:
+                    sig_text = signature_match.group(1)
+                    sig_text = re.sub(r'<[^>]+>', '', sig_text)  # Remove HTML tags
+                    sig_text = re.sub(r'\s+', ' ', sig_text)  # Normalize whitespace
+                    signature = sig_text.strip()
+                
                 methods.append({
                     'name': method_name,
-                    'signature': method_name + '(...)',
+                    'signature': signature,
                     'modifiers': '',
-                    'summary': '',
+                    'summary': method_summary,
                     'type': 'method'
                 })
         
-        # Remove duplicates
-        seen = set()
-        unique_methods = []
-        for method in methods:
-            if method['name'] not in seen:
-                seen.add(method['name'])
-                unique_methods.append(method)
+        # Also look for constructor pattern  
+        constructor_pattern = r'<div[^>]*class="[^"]*col-first[^"]*constructor-summary[^"]*"[^>]*>.*?</div>\s*<div[^>]*class="[^"]*col-second[^"]*constructor-summary[^"]*"[^>]*>.*?<a[^>]*class="[^"]*member-name-link[^"]*"[^>]*>(' + re.escape(class_simple_name) + r')</a>.*?</div>\s*<div[^>]*class="[^"]*col-last[^"]*constructor-summary[^"]*"[^>]*>(.*?)</div>'
+        
+        for match in re.finditer(constructor_pattern, content, re.DOTALL | re.IGNORECASE):
+            constructor_name = match.group(1).strip()
+            summary_section = match.group(2)
+            
+            # Extract summary from the block div
+            block_match = re.search(r'<div[^>]*class="[^"]*block[^"]*"[^>]*>(.*?)</div>', summary_section, re.DOTALL | re.IGNORECASE)
+            constructor_summary = ""
+            if block_match:
+                constructor_summary = block_match.group(1)
+                constructor_summary = re.sub(r'<[^>]+>', ' ', constructor_summary)  # Remove HTML tags
+                constructor_summary = re.sub(r'\s+', ' ', constructor_summary)  # Normalize whitespace
+                constructor_summary = constructor_summary.strip()
+            
+            # Try to extract signature
+            signature_match = re.search(r'<code[^>]*>(.*?)</code>', match.group(0), re.DOTALL | re.IGNORECASE)
+            signature = constructor_name + "(...)"
+            if signature_match:
+                sig_text = signature_match.group(1)
+                sig_text = re.sub(r'<[^>]+>', '', sig_text)  # Remove HTML tags
+                sig_text = re.sub(r'\s+', ' ', sig_text)  # Normalize whitespace
+                signature = sig_text.strip()
+            
+            methods.append({
+                'name': constructor_name,
+                'signature': signature,
+                'modifiers': '',
+                'summary': constructor_summary,
+                'type': 'constructor'
+            })
         
         return {
             'name': class_name,
-            'type': 'class',
-            'summary': '',
-            'methods': unique_methods
+            'type': type_info,
+            'summary': class_summary,
+            'methods': methods
         }
     
     def search_by_keyword(self, keyword: str) -> Dict[str, List[Dict[str, str]]]:
