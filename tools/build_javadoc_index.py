@@ -6,7 +6,6 @@ import asyncio
 from argparse import ArgumentParser
 from pathlib import Path
 from typing import List, Tuple
-from tqdm.asyncio import tqdm
 
 from nabchan_mcp_server.db.connection import connect_db
 from nabchan_mcp_server.javadoc.simple_parser import JavadocParser
@@ -136,12 +135,15 @@ async def main(
     ]
     
     all_classes = []
-    for coro in tqdm(asyncio.as_completed(package_tasks), total=len(package_tasks)):
+    completed = 0
+    for coro in asyncio.as_completed(package_tasks):
         package, classes = await coro
         await queue.put(package)
         for javadoc_class in classes:
             await queue.put(javadoc_class)
             all_classes.append(javadoc_class)
+        completed += 1
+        print(f"\rProcessed {completed}/{len(package_tasks)} packages", end="", flush=True)
     
     print(f"\nFound {len(all_classes)} classes")
     
@@ -153,11 +155,14 @@ async def main(
     ]
     
     method_count = 0
-    for coro in tqdm(asyncio.as_completed(class_tasks), total=len(class_tasks)):
+    completed = 0
+    for coro in asyncio.as_completed(class_tasks):
         methods = await coro
         for method in methods:
             await queue.put(method)
             method_count += 1
+        completed += 1
+        print(f"\rProcessed {completed}/{len(class_tasks)} classes", end="", flush=True)
     
     print(f"\nFound {method_count} methods")
     

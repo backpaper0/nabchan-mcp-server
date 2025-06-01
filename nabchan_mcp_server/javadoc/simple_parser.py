@@ -115,13 +115,19 @@ class JavadocParser:
             if (href.endswith('.html') and 
                 not href.startswith('package-') and 
                 not href.startswith('../') and
-                text and not text.startswith('All ')):
+                not href.startswith('#') and
+                '/' not in href and  # Exclude links to other packages
+                text and 
+                not text.startswith('All ') and
+                text not in ['Prev', 'Next', 'Frames', 'No Frames']):
                 
-                classes.append({
-                    'name': text,
-                    'type': 'class',
-                    'summary': ''
-                })
+                # Only include if it looks like a valid class name
+                if text and text[0].isupper() and '.' not in text:
+                    classes.append({
+                        'name': text,
+                        'type': 'class',
+                        'summary': ''
+                    })
         
         # Remove duplicates
         seen = set()
