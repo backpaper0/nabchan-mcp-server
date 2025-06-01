@@ -41,3 +41,6 @@ coverage = "DB_FILE=test.db coverage run -m unittest discover -s tests && covera
 integration_test = "DB_FILE=test.db python -m unittest discover -s tests -p it_*.py"
 all_tests = "task test && task integration_test"
 build_test_db = "DB_FILE=test.db python -m tests.db"
+build_doc_index = "python -m tools.build_index"
+build_javadoc_index = "python -m tools.build_javadoc_index"
+build_all_indices = "python -m tools.build_all_indices"

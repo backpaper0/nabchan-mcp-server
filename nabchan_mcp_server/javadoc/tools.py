@@ -3,21 +3,16 @@
 from typing import Dict, List, Optional, Union
 from pathlib import Path
 import mcp.types as types
-from .simple_parser import JavadocParser
+from nabchan_mcp_server.db.connection import connect_db
+from .operations import JavadocDbOperations
 
 
 class JavadocTools:
-    """MCP tools for querying Javadoc information."""
+    """MCP tools for querying Javadoc information from database."""
     
-    def __init__(self, base_path: str = "/workspace/nablarch.github.io"):
-        """Initialize with the base path to the documentation.
-        
-        Args:
-            base_path: Base path to the nablarch.github.io directory
-        """
-        self.base_path = Path(base_path)
-        if not self.base_path.exists():
-            raise ValueError(f"Base path does not exist: {self.base_path}")
+    def __init__(self):
+        """Initialize the Javadoc tools."""
+        pass
     
     async def list_packages(self, version: str = "LATEST") -> List[Dict[str, str]]:
         """Get a list of all packages in the specified Javadoc version.
@@ -29,8 +24,9 @@ class JavadocTools:
             List of packages with their names and summaries
         """
         try:
-            parser = JavadocParser(self.base_path, version)
-            return parser.get_all_packages()
+            with connect_db() as conn:
+                operations = JavadocDbOperations(conn)
+                return operations.get_all_packages(version)
         except Exception as e:
             return [{"error": str(e)}]
     
@@ -45,8 +41,12 @@ class JavadocTools:
             Package information including summary and class list
         """
         try:
-            parser = JavadocParser(self.base_path, version)
-            return parser.get_package_info(package_name)
+            with connect_db() as conn:
+                operations = JavadocDbOperations(conn)
+                result = operations.get_package_info(package_name, version)
+                if result is None:
+                    return {"error": f"Package not found: {package_name}"}
+                return result
         except Exception as e:
             return {"error": str(e)}
     
@@ -61,8 +61,12 @@ class JavadocTools:
             Class information including summary and method list
         """
         try:
-            parser = JavadocParser(self.base_path, version)
-            return parser.get_class_info(class_name)
+            with connect_db() as conn:
+                operations = JavadocDbOperations(conn)
+                result = operations.get_class_info(class_name, version)
+                if result is None:
+                    return {"error": f"Class not found: {class_name}"}
+                return result
         except Exception as e:
             return {"error": str(e)}
     
@@ -77,8 +81,9 @@ class JavadocTools:
             Dictionary with 'classes' and 'methods' lists
         """
         try:
-            parser = JavadocParser(self.base_path, version)
-            return parser.search_by_keyword(keyword)
+            with connect_db() as conn:
+                operations = JavadocDbOperations(conn)
+                return operations.search_by_keyword(keyword, version)
         except Exception as e:
             return {"error": str(e), "classes": [], "methods": []}
 

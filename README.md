@@ -89,6 +89,14 @@ MCPサーバーが提供しているAPIは次の通りです。
         - タイトル
         - URL
         - 概要
+- `javadoc_list_packages`
+    - Javadocに含まれるすべてのパッケージの一覧を取得します。
+- `javadoc_get_package`
+    - 指定されたパッケージの概要とクラス一覧を取得します。
+- `javadoc_get_class`
+    - 指定されたクラスの概要とメソッド一覧を取得します。
+- `javadoc_search`
+    - キーワードをもとに関連するクラス、メソッドを検索します。
 
 ## nabchan-mcp-server開発者向けの情報
 
@@ -101,8 +109,22 @@ MCPサーバーが提供しているAPIは次の通りです。
 
 ### インデックスの構築
 
+ドキュメントとJavadocの両方のインデックスを構築する場合：
+
+```bash
+uv run -m tools.build_all_indices
+```
+
+ドキュメントのインデックスのみを構築する場合：
+
 ```bash
 uv run -m tools.build_index
+```
+
+Javadocのインデックスのみを構築する場合：
+
+```bash
+uv run -m tools.build_javadoc_index
 ```
 
 > [!NOTE]
