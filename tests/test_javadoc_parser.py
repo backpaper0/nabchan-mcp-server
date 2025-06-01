@@ -87,14 +87,16 @@ class TestJavadocParser(unittest.TestCase):
         ];'''
         index_file.write_text(index_content)
         
-        results = parser.search_by_keyword("Test")
-        
-        self.assertEqual(len(results['classes']), 2)
-        self.assertEqual(results['classes'][0]['name'], "TestClass1")
-        self.assertEqual(results['classes'][0]['package'], "com.example.package1")
-        
-        # Clean up
-        index_file.unlink()
+        try:
+            results = parser.search_by_keyword("Test")
+            
+            self.assertEqual(len(results['classes']), 2)
+            self.assertEqual(results['classes'][0]['name'], "TestClass1")
+            self.assertEqual(results['classes'][0]['package'], "com.example.package1")
+        finally:
+            # Clean up
+            if index_file.exists():
+                index_file.unlink()
 
 
 if __name__ == '__main__':
